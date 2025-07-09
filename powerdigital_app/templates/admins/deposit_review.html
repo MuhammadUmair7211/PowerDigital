@@ -1,0 +1,95 @@
+{% extends 'admins/admin_base.html' %}
+
+{% block content %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pending Deposits</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-900 text-white font-sans">
+
+  <div class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+    <h2 class="text-2xl sm:text-3xl font-bold text-blue-400 text-center mb-6">
+      Pending Deposits
+    </h2>
+    <br>
+
+    <!-- Search Form -->
+    <form method="get" class="max-w-md mx-auto mb-6 flex">
+      <input
+        type="text"
+        name="q"
+        placeholder="Search by username"
+        value="{{ query }}"
+        class="flex-1 px-4 py-2 rounded-l bg-slate-800 text-white border border-slate-600 focus:outline-none"
+      >
+      <button class="bg-blue-900 hover:bg-blue-700 text-white px-4 rounded-r" type="submit">
+        Search
+      </button>
+    </form>
+
+    <!-- Table -->
+    <div class="overflow-x-auto rounded-lg shadow-lg bg-slate-800">
+      <table class="min-w-full text-sm">
+        <thead class="bg-slate-700 text-slate-300 uppercase text-xs">
+          <tr>
+            <th class="px-4 py-3 text-left">User</th>
+            <th class="px-4 py-3 text-left">Currency</th>
+            <th class="px-4 py-3 text-left">Amount</th>
+            <th class="px-4 py-3 text-left">Proof</th>
+            <th class="px-4 py-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for deposit in page_obj %}
+          <tr class="border-b border-slate-700 hover:bg-slate-700/50">
+            <td class="px-4 py-3">{{ deposit.user.username }}</td>
+            <td class="px-4 py-3">{{ deposit.currency }}</td>
+            <td class="px-4 py-3">${{ deposit.amount }}</td>
+            <td class="px-4 py-3">
+              <a href="{{ deposit.payment_proof.url }}" target="_blank"
+                 class="inline-block px-3 py-1 bg-blue-700 text-white rounded hover:bg-blue-800 text-xs font-medium">
+                View
+              </a>
+            </td>
+            <td class="px-4 py-3">
+              <a href="{% url 'approve_deposit' deposit.id %}"
+                 class="inline-block px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-xs font-medium">
+                Approve
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-slate-400 py-6">
+              No pending deposits found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-6 space-x-2">
+      {% if page_obj.has_previous %}
+        <a href="?q={{ query }}&page=1" class="px-3 py-1 bg-slate-700 rounded hover:bg-slate-600">First</a>
+        <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-slate-700 rounded hover:bg-slate-600">Previous</a>
+      {% endif %}
+
+      <span class="px-4 py-1 bg-blue-900 text-white rounded">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+      {% if page_obj.has_next %}
+        <a href="?q={{ query }}&page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-slate-700 rounded hover:bg-slate-600">Next</a>
+        <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 bg-slate-700 rounded hover:bg-slate-600">Last</a>
+      {% endif %}
+    </div>
+  </div>
+
+</body>
+</html>
+{% endblock %}

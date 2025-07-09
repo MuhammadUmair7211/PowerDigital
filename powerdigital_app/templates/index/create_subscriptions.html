@@ -1,0 +1,222 @@
+{% extends 'admins/admin_base.html' %}
+{% load static %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Create Subscription</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .form-container {
+      max-width: 720px;
+      margin: 60px auto;
+      background-color: #1e293b;
+      padding: 32px 24px;
+      border-radius: 16px;
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.4);
+    }
+
+    h2 {
+      text-align: center;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 32px;
+      font-size: 1.8rem;
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    input[type="text"],
+    input[type="number"],
+    input[type="datetime-local"],
+    textarea,
+    select {
+      background-color: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #374151;
+      padding: 10px 12px;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 0.95rem;
+      transition: border 0.2s;
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: #60a5fa;
+      outline: none;
+    }
+
+    .form-check-label {
+      color: #cbd5e1;
+      font-weight: 500;
+      margin-left: 6px;
+    }
+
+    .form-check-input {
+      background-color: #1e293b;
+      border-color: #374151;
+    }
+
+    .btn-submit {
+      background-color: #165470;
+      color: white;
+      padding: 12px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 10px;
+      width: 100%;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+
+    .btn-submit:hover {
+      background-color: #0c4058;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-error {
+      color: #f87171;
+      font-size: 0.875rem;
+      margin-top: 4px;
+    }
+
+    /* File input styling */
+    .custom-file-input {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      background-color: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    .custom-file-input::-webkit-file-upload-button {
+      visibility: hidden;
+    }
+
+    .custom-file-input::before {
+      content: '📁 Choose Image';
+      display: inline-block;
+      background: #2563eb;
+      color: white;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin-right: 10px;
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .custom-file-input:hover::before {
+      background-color: #1d4ed8;
+    }
+
+    @media (max-width: 576px) {
+      .form-container {
+        padding: 24px 16px;
+        margin: 40px 12px;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      .btn-submit {
+        font-size: 0.95rem;
+      }
+
+      input, textarea, select {
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <h2>Create Subscription Item</h2>
+
+  <form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div class="form-group">
+      <label for="{{ form.name.id_for_label }}">Name</label>
+      {{ form.name }}
+      {% for error in form.name.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.image.id_for_label }}">Image</label>
+      <input type="file" name="{{ form.image.name }}" id="{{ form.image.id_for_label }}" class="custom-file-input">
+      {% for error in form.image.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.description.id_for_label }}">Description</label>
+      {{ form.description }}
+      {% for error in form.description.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.price.id_for_label }}">Price</label>
+      {{ form.price }}
+      {% for error in form.price.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.available_from.id_for_label }}">Available From</label>
+      {{ form.available_from }}
+      {% for error in form.available_from.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-group">
+      <label for="{{ form.available_until.id_for_label }}">Available Until</label>
+      {{ form.available_until }}
+      {% for error in form.available_until.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <div class="form-check mb-4">
+      {{ form.is_active }}
+      <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+    </div>
+
+    <button type="submit" class="btn-submit">Create Subscription</button>
+  </form>
+</div>
+
+</body>
+</html>
+{% endblock %}

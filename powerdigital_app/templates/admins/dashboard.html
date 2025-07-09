@@ -1,0 +1,161 @@
+{% extends 'admins/admin_base.html' %} {% load static %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Admin Dashboard</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+		<!-- Font Awesome for Icons -->
+		<link
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+			rel="stylesheet"
+		/>
+
+		<style>
+			body {
+				margin: 0;
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				background-color: #0f172a;
+				color: #e2e8f0;
+			}
+
+			.container {
+				max-width: 1140px;
+				margin: 30px auto;
+				padding: 0 16px;
+			}
+
+			h2 {
+				font-size: 28px;
+				color: #38bdf8;
+				text-align: center;
+			}
+
+			.grid {
+				display: grid;
+				grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+				gap: 20px;
+			}
+
+			.card {
+				background-color: #1e293b;
+				border: 1px solid #334155;
+				padding: 16px;
+				border-radius: 14px;
+				box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+				transition: transform 0.2s ease, background-color 0.2s ease;
+				text-decoration: none;
+				color: inherit;
+				display: flex;
+				flex-direction: column;
+				align-items: flex-start;
+			}
+
+			.card:hover {
+				background-color: #334155;
+				transform: translateY(-5px);
+			}
+
+			.card i {
+				font-size: 24px;
+				color: #38bdf8;
+				margin-bottom: 10px;
+			}
+
+			.card h4 {
+				margin: 0;
+				font-size: 18px;
+				color: #ffffff;
+			}
+
+			.card p {
+				margin: 0;
+				font-size: 14px;
+				color: #94a3b8;
+			}
+
+			@media (max-width: 640px) {
+				h2 {
+					font-size: 22px;
+				}
+
+				.card h4 {
+					font-size: 16px;
+				}
+
+				.card p {
+					font-size: 13px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Dashboard Content -->
+		<div class="container">
+			<h2><i class="fas fa-tachometer-alt"></i> Admin Dashboard</h2>
+			<br />
+			<div class="grid">
+				<a href="{% url 'admin_invite_list' %}" class="card">
+					<i class="fas fa-user-check"></i>
+					<h4>Approve Profile</h4>
+					<p>Accept or reject newly registered users</p>
+				</a>
+
+				<a href="{% url 'verification_list' %}" class="card">
+					<i class="fas fa-id-card"></i>
+					<h4>Verify Identity</h4>
+					<p>Review submitted ID documents</p>
+				</a>
+
+				<a href="{% url 'all_users' %}" class="card">
+					<i class="fas fa-users"></i>
+					<h4>Manage Users</h4>
+					<p>View and edit user profiles & scores</p>
+				</a>
+
+				<a href="{% url 'upload_banner_set' %}" class="card">
+					<i class="fas fa-image"></i>
+					<h4>Add Advertisement</h4>
+					<p>Upload promotional banner images</p>
+				</a>
+
+				<a href="{% url 'admin_trades' %}" class="card">
+					<i class="fas fa-chart-line"></i>
+					<h4>Manage Trades</h4>
+					<p>Update user trading performance</p>
+				</a>
+
+				<a href="{% url 'admin_deposits' %}" class="card">
+					<i class="fas fa-wallet"></i>
+					<h4>Approve Deposits</h4>
+					<p>Approve deposit requests & proofs</p>
+				</a>
+				<a href="{% url 'admin_deposit_list_view' %}" class="card">
+					<i class="fas fa-wallet"></i>
+					<h4>Users Deposits</h4>
+					<p>View deposit requests & proofs</p>
+				</a>
+				<a href="{% url 'admin_withdrawal_list' %}" class="card">
+					<i class="fas fa-wallet"></i>
+					<h4>Users Withdrawals</h4>
+					<p>View Users Withdrawals</p>
+				</a>
+
+				<a href="{% url 'admin_support_dashboard' %}" class="card">
+					<i class="fas fa-comments"></i>
+					<h4>User Queries</h4>
+					<p>Respond to support chats from users</p>
+				</a>
+
+				<a href="{% url 'create_subscription_item' %}" class="card">
+					<i class="fas fa-box-open"></i>
+					<h4>Manage Subscriptions</h4>
+					<p>Create or update token sale plans</p>
+				</a>
+			</div>
+		</div>
+	</body>
+</html>
+
+{% endblock %}

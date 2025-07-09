@@ -1,0 +1,27 @@
+<div class="container mt-5 p-4 bg-gray-900 text-white rounded">
+  <h3 class="mb-4">Bank Details</h3>
+
+  {% if bank %}
+    <ul class="list-group bg-gray-800 rounded">
+      <li class="list-group-item bg-gray-800 text-white d-flex justify-content-between">
+        <strong>Bank Card Type:</strong> <span>{{ bank.bank_type }}</span>
+      </li>
+      <li class="list-group-item bg-gray-800 text-white d-flex justify-content-between">
+        <strong>Bank Card Number:</strong> <span>{{ bank.bank_number }}</span>
+      </li>
+      <li class="list-group-item bg-gray-800 text-white d-flex justify-content-between">
+        <strong>Account Holder Name:</strong> <span>{{ bank.account_name }}</span>
+      </li>
+      <li class="list-group-item bg-gray-800 text-white d-flex justify-content-between">
+        <strong>Status:</strong>
+        {% if bank.is_verified %}
+          <span class="text-success">✔ Approved</span>
+        {% else %}
+          <span class="text-warning">⏳ Pending Approval</span>
+        {% endif %}
+      </li>
+    </ul>
+  {% else %}
+    <p class="text-warning">You have not submitted any bank details yet.</p>
+  {% endif %}
+</div>

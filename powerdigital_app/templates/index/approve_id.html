@@ -1,0 +1,135 @@
+{% extends 'admins/admin_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% trans "Identity Verifications" %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #0f172a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    .modal {
+      display: none;
+    }
+    .modal.active {
+      display: flex;
+    }
+  </style>
+</head>
+<body>
+
+<div class="max-w-7xl mx-auto mt-10 px-4">
+  <!-- Title -->
+  <h1 class="text-2xl sm:text-3xl font-bold text-blue-400 mb-6 text-center">{% trans "Identity Verification Requests" %}</h1>
+
+  <!-- Search Bar -->
+  <form method="get" class="flex flex-col sm:flex-row max-w-xl mx-auto mb-6 gap-2">
+    <input
+      type="text"
+      name="q"
+      value="{{ query }}"
+      placeholder="{% trans 'Search by username' %}"
+      class="w-full px-4 py-2 rounded bg-gray-800 border border-gray-700 text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    >
+    <button type="submit" class="bg-blue-900 hover:bg-blue-800 text-white px-5 py-2 rounded">
+       {% trans "Search" %}
+    </button>
+  </form>
+
+  <!-- Table Container -->
+  <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-700">
+    <table class="min-w-full bg-gray-900 text-sm text-gray-300">
+      <thead class="bg-gray-800 text-xs text-gray-400 uppercase tracking-wider">
+        <tr>
+          <th class="px-4 py-3 text-left">{% trans "User" %}</th>
+          <th class="px-4 py-3 text-left">{% trans "Phone" %}</th>
+          <th class="px-4 py-3 text-left">{% trans "ID Front" %}</th>
+          <th class="px-4 py-3 text-left">{% trans "ID Back" %}</th>
+          <th class="px-4 py-3 text-left">{% trans "Status" %}</th>
+          <th class="px-4 py-3 text-left">{% trans "Actions" %}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in verifications %}
+          <tr class="border-b border-gray-700 hover:bg-gray-800 transition">
+            <td class="px-4 py-3 font-medium whitespace-nowrap">{{ v.user.username }}</td>
+            <td class="px-4 py-3">{{ v.phone }}</td>
+            <td class="px-4 py-3">
+              <img src="{{ v.id_card_front.url }}" alt="Front" class="w-20 h-12 object-cover rounded shadow cursor-pointer" onclick="showModal('{{ v.id_card_front.url }}')">
+            </td>
+            <td class="px-4 py-3">
+              <img src="{{ v.id_card_back.url }}" alt="Back" class="w-20 h-12 object-cover rounded shadow cursor-pointer" onclick="showModal('{{ v.id_card_back.url }}')">
+            </td>
+            <td class="px-4 py-3">
+              {% if v.approved %}
+                <span class="text-green-400 font-semibold">{% trans "Approved" %}</span>
+              {% else %}
+                <span class="text-yellow-400 font-semibold">{% trans "Pending" %}</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3">
+              {% if not v.approved %}
+                <a href="{% url 'approve_verification' v.id %}" class="bg-green-600 hover:bg-green-700 text-white text-sm px-4 py-1 rounded shadow">
+                  <i class="fas fa-check-circle"></i> {% trans "Approve" %}
+                </a>
+              {% else %}
+                <span class="text-sm text-gray-500">-</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-6 text-gray-500">{% trans "No verification requests found." %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="flex justify-center mt-8 flex-wrap gap-2 text-sm">
+    {% if page_obj.has_previous %}
+      <a href="?q={{ query }}&page=1" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">First</a>
+      <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Previous</a>
+    {% endif %}
+
+    <span class="px-4 py-1 bg-blue-900 text-white rounded">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?q={{ query }}&page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Next</a>
+      <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Last</a>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Modal -->
+<div id="imageModal" class="modal fixed inset-0 bg-black bg-opacity-90 justify-center items-center z-50 p-4">
+  <div class="relative max-w-2xl w-full">
+    <button onclick="closeModal()" class="absolute top-4 right-4 bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-full shadow">✖</button>
+    <img id="modalImage" src="" alt="Full Preview" class="w-full rounded-lg shadow-lg border border-gray-600">
+  </div>
+</div>
+
+<!-- Script -->
+<script>
+  function showModal(src) {
+    document.getElementById('modalImage').src = src;
+    document.getElementById('imageModal').classList.add('active');
+  }
+
+  function closeModal() {
+    document.getElementById('imageModal').classList.remove('active');
+    document.getElementById('modalImage').src = '';
+  }
+</script>
+
+</body>
+</html>
+{% endblock %}

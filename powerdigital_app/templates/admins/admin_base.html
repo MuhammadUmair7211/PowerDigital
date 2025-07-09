@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Admin{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <!-- Font Awesome for Icons -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #0f172a;
+      color: #e2e8f0;
+    }
+
+    .navbar {
+      background-color: #1e293b;
+      padding: 16px 30px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #334155;
+      box-sizing: border-box;
+    }
+
+    .navbar h1 {
+      margin: 0;
+      font-size: 22px;
+      color: #38bdf8;
+    }
+
+    .navbar a {
+      color: #e2e8f0;
+      text-decoration: none;
+      margin-left: 20px;
+      font-size: 16px;
+      transition: color 0.3s ease;
+    }
+
+    .navbar a:hover {
+      color: #60a5fa;
+    }
+
+   
+  </style>
+</head>
+<body>
+
+  <!-- Full-width Navbar -->
+    <div class="navbar">
+    <a href="{% url 'admin_dashboard' %}" style="text-decoration: none;">
+        <h1><i class="fas fa-tools"></i> Admin Panel</h1>
+    </a>
+
+    <div>
+        <a href="{% url 'admin_logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+    </div>
+
+ 
+    {% block content %}
+    {% endblock %}
+ 
+
+</body>
+</html>

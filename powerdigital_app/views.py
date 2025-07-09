@@ -1,0 +1,837 @@
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate, login, logout
+from captcha.helpers import captcha_image_url
+from captcha.models import CaptchaStore
+from django.http import HttpResponse , JsonResponse
+from .models import TradeOrder , SupportMessage , BannerSet , SubscriptionItem , Subscription , Deposit , Profile , UserBankDetail , IdentityVerification , WithdrawalRequest
+from django.db import transaction
+from decimal import Decimal
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+from django.db.models import Sum
+from django.contrib.auth.decorators import user_passes_test
+from django.contrib import messages
+from django.views.decorators.http import require_POST
+from functools import wraps
+from .forms import TradeOrderForm , SubscriptionItemForm ,  BannerSetForm , AdminRegisterForm , WithdrawalRequestForm , DepositForm , UserBankDetailForm , PasswordResetForm , IdentityVerificationForm
+
+
+def admin_required(function):
+    @wraps(function)
+    def _wrapped_view(request, *args, **kwargs):
+        username = request.user.username.lower()
+        
+        # Check if 'admin' or 'employee' is in the username
+        if not ('admin' in username ):
+            return redirect('login')  # Redirect if neither 'admin' nor 'employee' is found in the username
+        
+        return function(request, *args, **kwargs)
+    
+    return _wrapped_view
+
+
+def register_view(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        email = request.POST['email']
+        password = request.POST['password']
+
+        if User.objects.filter(username=username).exists():
+            return HttpResponse("Username already exists")
+
+        user = User.objects.create_user(username=username, email=email, password=password)
+        profile = user.profile  # Access via related name
+
+        # Optional: Notify admin here via email or display in admin portal
+        login(request, user)  # Login only if you want restricted access
+        return redirect('invite_pending')  # New page to tell user they're waiting for approval
+
+    return render(request, 'authentication/register.html')
+
+
+
+
+def login_view(request):
+    error = None
+
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        captcha_key = request.POST.get('captcha_0')
+        captcha_value = request.POST.get('captcha_1')
+
+        try:
+            captcha = CaptchaStore.objects.get(hashkey=captcha_key)
+            if captcha.response != captcha_value.lower():
+                error = "Invalid CAPTCHA"
+            else:
+                user = authenticate(request, username=username, password=password)
+                if user is not None:
+                    # Check invite approval
+                    if hasattr(user, 'profile') and not user.profile.is_approved:
+                        return redirect('invite_pending')  # redirect to waiting page
+                    login(request, user)
+                    return redirect('home')
+                else:
+                    error = "Invalid username or password"
+        except CaptchaStore.DoesNotExist:
+            error = "CAPTCHA session expired"
+
+    new_captcha = CaptchaStore.generate_key()
+    image_url = captcha_image_url(new_captcha)
+
+    return render(request, 'authentication/login.html', {
+        'captcha_key': new_captcha,
+        'captcha_image': image_url,
+        'error': error
+    })
+
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
+
+
+def admin_logout(request):
+    logout(request)
+    return redirect('admin_login')
+
+
+
+@login_required
+def home_view(request):
+    # Assuming you want to get the latest BannerSet entry
+    banner_set = BannerSet.objects.order_by('-uploaded_at').first()
+    return render(request, 'main/home.html', {'banner_set': banner_set})
+
+
+
+
+
+def get_profit_percentage(expiry_time):
+    return {
+        120: Decimal("0.30"),
+        180: Decimal("0.40"),
+        300: Decimal("0.50"),
+        360: Decimal("0.60")
+    }.get(int(expiry_time), Decimal("0.00"))
+
+
+
+
+def place_trade(request):
+
+    if request.method == "POST":
+        pair = request.POST.get('trading_pair')
+        direction = request.POST.get('direction')
+        amount = Decimal(request.POST.get('custom_amount') or "0")
+        expiry_time = int(request.POST.get('expiry_time'))
+
+        profit_percent = get_profit_percentage(expiry_time)
+        profit = amount * profit_percent
+
+        print(profit)
+
+        TradeOrder.objects.create(
+            user=request.user,
+            pair=pair,
+            direction="Buy Up" if direction == "up" else "Buy Down",
+            amount=amount,
+            expiry_time=expiry_time
+        )
+
+        profile = Profile.objects.select_for_update().get(user=request.user)
+        profile.total_profit += profit
+        profile.save()
+
+
+        return JsonResponse({'success': True, 'profit_added': str(profit)})
+
+    return render(request, "main/contract.html")
+
+
+
+
+
+def submit_order(request):
+    if request.method == "POST":
+        form = TradeOrderForm(request.POST)
+        if form.is_valid():
+            order = form.save(commit=False)
+            order.user = request.user
+            order.save()
+            return redirect('order_success') 
+    return redirect('home')
+
+
+
+
+
+
+def user_trades(request):  
+    trades = TradeOrder.objects.filter(user=request.user).order_by('-created_at')
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    approved_total = Deposit.objects.filter(
+        user=request.user, is_approved=True
+    ).aggregate(total=Sum('amount'))['total'] or 0
+
+
+    profile.total_deposit = approved_total
+    profile.save()
+
+    total_balance = profile.total_deposit + profile.total_profit
+
+    total_profit = profile.total_profit
+
+     # Pagination setup (10 trades per page)
+    paginator = Paginator(trades, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "main/assets.html", {"user_trades": trades , 'total_deposit': approved_total ,
+                                                 'total_balance': total_balance , 'total_profit' : total_profit , 
+                                                 'page_obj': page_obj})
+
+
+
+def profile(request):
+    pro = Profile.objects.filter(user=request.user)
+    
+    # Check if user has an approved verification
+    is_verified = IdentityVerification.objects.filter(user=request.user, approved=True).exists()
+
+    return render(request, 'main/profile.html', {
+        'pro': pro,
+        'user': request.user,
+        'is_verified': is_verified,
+    })
+
+
+
+
+
+def verify_identity(request):
+    if request.method == 'POST':
+        try:
+            instance = IdentityVerification.objects.get(user=request.user)
+            form = IdentityVerificationForm(request.POST, request.FILES, instance=instance)
+        except IdentityVerification.DoesNotExist:
+            form = IdentityVerificationForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            instance = form.save(commit=False)
+            instance.user = request.user
+            instance.save()
+            return redirect('profile')
+    else:
+        try:
+            instance = IdentityVerification.objects.get(user=request.user)
+            form = IdentityVerificationForm(instance=instance)
+        except IdentityVerification.DoesNotExist:
+            form = IdentityVerificationForm()
+
+    return render(request, 'index/identity.html', {'form': form})
+
+
+
+
+
+
+def verification_list(request):
+    query = request.GET.get('q', '')
+    verifications = IdentityVerification.objects.select_related('user')
+
+    if query:
+        verifications = verifications.filter(user__username__icontains=query)
+
+    verifications = verifications.order_by('-submitted_at')
+    paginator = Paginator(verifications, 10)  # Show 10 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'index/approve_id.html', {
+        'verifications': page_obj,
+        'query': query,
+        'page_obj': page_obj
+    })
+
+
+
+
+def approve_verification(request, pk):
+    verification = get_object_or_404(IdentityVerification, pk=pk)
+    verification.approved = True
+    verification.save()
+    return redirect('verification_list')
+
+
+
+def real_name_auth(request):
+    return render(request , 'index/real_name_auth.html')
+
+
+
+def reset_password_view(request):
+    if request.method == 'POST':
+        form = PasswordResetForm(user=request.user, data=request.POST)
+        if form.is_valid():
+            form.save()
+            update_session_auth_hash(request, form.user)  # Keeps user logged in
+            messages.success(request, 'Your password has been updated successfully.')
+            return redirect('profile')
+    else:
+        form = PasswordResetForm(user=request.user)
+
+    return render(request, 'index/reset_password.html', {'form': form})
+
+
+
+
+def bank_detail_view(request):
+    try:
+        instance = request.user.userbankdetail
+    except UserBankDetail.DoesNotExist:
+        instance = None
+
+    if request.method == 'POST':
+        form = UserBankDetailForm(request.POST, instance=instance)
+        if form.is_valid():
+            bank_detail = form.save(commit=False)
+            bank_detail.user = request.user
+            bank_detail.save()
+            return redirect('profile')  # Redirect where appropriate
+    else:
+        form = UserBankDetailForm(instance=instance)
+
+    return render(request, 'index/bank_detail.html', {'form': form, 'bank': instance})
+
+
+
+
+
+def approve_bank_detail(request, pk):
+    bank = get_object_or_404(UserBankDetail, pk=pk)
+    bank.is_verified = True
+    bank.save()
+    return redirect('bank_detail')
+
+
+
+
+def deposit_create_view(request):
+    if request.method == 'POST':
+        form = DepositForm(request.POST, request.FILES)
+        if form.is_valid():
+            deposit = form.save(commit=False)
+            deposit.user = request.user
+            deposit.save()
+            return redirect('deposit_list')
+    else:
+        form = DepositForm()
+    return render(request, 'index/deposit_form.html', {'form': form})
+
+
+
+def deposit_list_view(request):
+    deposits = Deposit.objects.filter(user=request.user).order_by('-created_at')
+    return render(request, 'index/deposit_list.html', {'deposits': deposits})
+
+
+
+
+def admin_deposit_list_view(request):
+    search_query = request.GET.get('search', '')
+    deposits = Deposit.objects.all().order_by('-created_at')
+
+    if search_query:
+        deposits = deposits.filter(user__username__icontains=search_query)
+
+    paginator = Paginator(deposits, 5)  # Show 5 deposits per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'deposits': page_obj,
+        'search_query': search_query,
+    }
+    return render(request, 'admins/admin_deposit_list.html', context)
+
+
+
+def deposit_approve(request, pk):
+    deposit = get_object_or_404(Deposit, pk=pk)
+    deposit.is_approved = True
+    deposit.save()
+    messages.success(request, f'Deposit #{deposit.id} approved successfully.')
+    return redirect('deposit_list')
+
+
+
+
+
+def request_withdrawal(request):
+    if request.method == 'POST':
+        form = WithdrawalRequestForm(request.POST, user=request.user)
+        if form.is_valid():
+            withdrawal = form.save(commit=False)
+            withdrawal.user = request.user
+            withdrawal.save()
+            messages.success(request, "Withdrawal request submitted successfully.")
+            return redirect('withdrawal_success')
+    else:
+        form = WithdrawalRequestForm(user=request.user)
+
+    return render(request, 'index/withdrawal_form.html', {'form': form})
+
+
+
+def withdrawal_list(request):
+    withdrawals = WithdrawalRequest.objects.filter(user=request.user).order_by('-created_at')
+    paginator = Paginator(withdrawals, 10)  # Show 10 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, 'index/withdrawal_list.html', {'withdrawal': page_obj})
+
+
+
+
+def admin_withdrawal_list(request):
+    search_query = request.GET.get('search', '')
+    withdrawals = WithdrawalRequest.objects.all().order_by('-created_at')
+
+    if search_query:
+        withdrawals = withdrawals.filter(
+            Q(user__username__icontains=search_query)
+        )
+
+    paginator = Paginator(withdrawals, 10)  # 10 per page
+    page = request.GET.get('page')
+    withdrawals_page = paginator.get_page(page)
+
+    return render(request, 'admins/admin_withdrawal_list.html', {
+        'withdrawals': withdrawals_page
+    })
+
+
+
+
+
+
+def set_withdrawal_password(request):
+    if request.method == 'POST':
+        password = request.POST.get('password')
+        confirm = request.POST.get('confirm')
+
+        if password != confirm:
+            messages.error(request, "Passwords do not match.")
+        else:
+            profile = request.user.profile
+            profile.set_withdrawal_password(password)
+            profile.save()
+            messages.success(request, "Withdrawal password set successfully.")
+            return redirect('profile')  # or wherever you want
+    return render(request, 'index/change_withdrawal_password.html')
+
+
+
+def real_market(request):
+    return render(request , 'main/market.html')
+
+
+
+
+def mark_trade_result(request, trade_id, outcome):
+    trade = get_object_or_404(TradeOrder, id=trade_id)
+
+    if trade.result_handled:
+        messages.warning(request, "Trade already processed.")
+        return redirect('admin_trades')
+
+    if outcome not in ['win', 'loss']:
+        messages.error(request, "Invalid result.")
+        return redirect('admin_trades')
+
+    # Set result and handle deposit
+    trade.result = outcome
+    trade.result_handled = True
+    trade.save()
+
+    profile, _ = Profile.objects.get_or_create(user=trade.user)
+    if outcome == 'win':
+        profile.total_deposit += trade.amount
+    else:  # loss
+        profile.total_deposit -= trade.amount
+    profile.save()
+
+    messages.success(request, f"Marked trade as {outcome} and updated balance.")
+    return redirect('admin_trades')
+
+
+
+def trade_review_admin(request):
+    trades = TradeOrder.objects.all().order_by('-created_at')
+    return render(request, 'admins/trade_review.html', {'trades': trades})
+
+
+
+
+
+
+def admin_dashboard(request):
+    if not request.user.is_authenticated:
+        return redirect('login')
+    return render(request, 'admins/dashboard.html')
+
+
+
+
+def trade_review_admin(request):
+    query = request.GET.get('q', '')
+    
+    trades = TradeOrder.objects.select_related('user').order_by('-created_at')
+    if query:
+        trades = trades.filter(user__username__icontains=query)
+    
+    paginator = Paginator(trades, 10)  # 10 trades per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'trades': page_obj,
+        'query': query,
+        'page_obj': page_obj
+    }
+    return render(request, 'admins/trade_review.html', context)
+
+
+
+
+
+def mark_trade_result(request, trade_id, outcome):
+    trade = get_object_or_404(TradeOrder, id=trade_id)
+
+    if trade.result_handled:
+        messages.warning(request, "Trade already processed.")
+        return redirect('admin_trades')
+
+    if outcome not in ['win', 'loss']:
+        messages.error(request, "Invalid result.")
+        return redirect('admin_trades')
+
+    trade.result = outcome
+    trade.result_handled = True
+    trade.save()
+
+    profile, _ = Profile.objects.get_or_create(user=trade.user)
+    if outcome == 'win':
+        profile.total_deposit += trade.amount
+    elif outcome == 'loss':
+        profile.total_deposit -= trade.amount
+    profile.save()
+
+    messages.success(request, f"Marked trade as {outcome}.")
+    return redirect('admin_trades')
+
+
+
+
+def admin_deposit_list(request):
+    query = request.GET.get('q', '')
+    deposits = Deposit.objects.filter(is_approved=False).order_by('-created_at')
+
+    if query:
+        deposits = deposits.filter(Q(user__username__icontains=query))
+
+    paginator = Paginator(deposits, 10)  # Show 10 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admins/deposit_review.html', {
+        'page_obj': page_obj,
+        'query': query
+    })
+
+
+
+
+def approve_deposit(request, deposit_id):
+    deposit = get_object_or_404(Deposit, id=deposit_id)
+    deposit.is_approved = True
+    deposit.save()
+
+    profile, _ = Profile.objects.get_or_create(user=deposit.user)
+    total = Deposit.objects.filter(user=deposit.user, is_approved=True).aggregate(Sum('amount'))['amount__sum'] or 0
+    profile.total_deposit = total
+    profile.save()
+
+    messages.success(request, "Deposit approved and balance updated.")
+    return redirect('admin_deposits')
+
+
+
+
+def admin_login_view(request):
+         
+    if request.method == "POST":
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(request, username=username, password=password)
+        if user and user.is_staff:
+            login(request, user)
+            # Ensure Profile exists
+            Profile.objects.get_or_create(user=user)
+            return redirect('admin_dashboard')
+        else:
+            messages.error(request, "Invalid credentials or not authorized.")
+
+    return render(request, "admins/admin_login.html")
+
+
+
+
+
+def admin_register_view(request):
+    if request.method == "POST":
+        form = AdminRegisterForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.set_password(form.cleaned_data['password'])
+            user.is_staff = True  # Make the user an admin
+            user.save()
+            Profile.objects.get_or_create(user=user)  # Ensure profile is created
+            messages.success(request, "Admin account created successfully.")
+            return redirect('admin_login')  # Replace with your actual login view
+    else:
+        form = AdminRegisterForm()
+    return render(request, 'admins/admin_register.html', {'form': form})
+
+
+
+
+def create_subscription_item(request):
+    if request.method == 'POST':
+        form = SubscriptionItemForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('subscription_list')  # Or wherever you list items
+    else:
+        form = SubscriptionItemForm()
+    
+    return render(request, 'index/create_subscriptions.html', {'form': form})
+
+
+
+def subscribe_to_item(request, item_id):
+    item = get_object_or_404(SubscriptionItem, id=item_id, is_active=True)
+
+    # Check if user already subscribed
+    already_subscribed = Subscription.objects.filter(user=request.user, item=item).exists()
+    if already_subscribed:
+        messages.warning(request, "You are already subscribed to this item.")
+    else:
+        Subscription.objects.create(user=request.user, item=item)
+        messages.success(request, f"Successfully subscribed to {item.name}.")
+
+    return redirect('subscription_list')  # Or the page you want to redirect back to
+
+
+
+
+def subscription_list(request):
+    items = SubscriptionItem.objects.filter(is_active=True)
+    subscribed_item_ids = []
+
+    if request.user.is_authenticated:
+        subscribed_item_ids = list(
+            Subscription.objects.filter(user=request.user).values_list('item_id', flat=True)
+        )
+
+    return render(request, 'index/subscription_list.html', {
+        'items': items,
+        'subscribed_item_ids': subscribed_item_ids
+    })
+
+
+
+@require_POST
+def update_trade_profit(request, trade_id):
+    trade = get_object_or_404(TradeOrder, id=trade_id)
+
+    try:
+        manual_profit = Decimal(request.POST.get('manual_profit'))
+    except (ValueError, TypeError):
+        manual_profit = Decimal('0.00')
+
+    trade.manual_profit = manual_profit
+    trade.save()
+
+    with transaction.atomic():
+        profile = Profile.objects.select_for_update().get(user=trade.user)
+        profile.total_profit += manual_profit
+        profile.save()
+
+    return redirect('admin_trades')
+
+
+@staff_member_required
+def all_users_view(request):
+    query = request.GET.get('q', '')
+
+    profiles = Profile.objects.select_related('user') \
+        .exclude(user__username__startswith='admin') \
+        .filter(Q(user__username__icontains=query)) \
+        .order_by('-user__date_joined')
+
+    paginator = Paginator(profiles, 10)  # 10 users per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    if request.method == 'POST':
+        profile_id = request.POST.get('profile_id')
+        new_score = request.POST.get('credit_score')
+        profile = get_object_or_404(Profile, id=profile_id)
+        try:
+            profile.credit_score = int(new_score)
+            profile.save()
+        except ValueError:
+            pass
+        return redirect('all_users')  # Update with your actual URL name
+
+    return render(request, 'admins/all_users.html', {
+        'page_obj': page_obj,
+        'query': query,
+    })
+
+
+
+
+
+
+def admin_invite_list(request):
+    pending_profiles = Profile.objects.filter(is_approved=False)
+    return render(request, 'admins/invite_list.html', {'profiles': pending_profiles})
+
+
+
+def approve_user(request, profile_id):
+    profile = Profile.objects.get(id=profile_id)
+    profile.is_approved = True
+    profile.save()
+    return redirect('admin_invite_list')
+
+
+
+
+def language_page(request):
+    return render(request, 'index/language.html')
+
+
+
+
+def upload_banner_set(request):
+    if request.method == 'POST':
+        form = BannerSetForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('upload_banner_set')  # Change to your preview url
+    else:
+        form = BannerSetForm()
+    return render(request, 'admins/upload_banner.html', {'form': form})
+
+
+
+
+
+def support_chat(request):
+    admin_users = User.objects.filter(username__istartswith='admin').exclude(id=request.user.id)
+    selected_admin_id = request.GET.get('admin_id')
+    selected_admin = get_object_or_404(User, id=selected_admin_id) if selected_admin_id else None
+
+    messages = []
+    if selected_admin:
+        messages = SupportMessage.objects.filter(
+            Q(sender=request.user, receiver=selected_admin) |
+            Q(sender=selected_admin, receiver=request.user)
+        ).order_by('timestamp')
+
+        if request.method == 'POST':
+            message = request.POST.get('message')
+            if message:
+                SupportMessage.objects.create(
+                    sender=request.user,
+                    receiver=selected_admin,
+                    message=message
+                )
+                return redirect(f"{request.path}?admin_id={selected_admin.id}")
+
+    return render(request, 'index/chat.html', {
+        'admin_users': admin_users,
+        'selected_admin': selected_admin,
+        'messages': messages
+    })
+
+
+
+
+def admin_chat_with_user(request, user_id):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    user = get_object_or_404(User, id=user_id)
+    messages = SupportMessage.objects.filter(
+        Q(sender=user, receiver=request.user) |
+        Q(sender=request.user, receiver=user)
+    ).order_by('timestamp')
+
+    if request.method == 'POST':
+        msg = request.POST.get('message')
+        if msg:
+            SupportMessage.objects.create(
+                sender=request.user,
+                receiver=user,
+                message=msg
+            )
+            return redirect('admin_chat_with_user', user_id=user.id)
+
+    return render(request, 'admins/chat_admin.html', {'messages': messages, 'user': user})
+
+
+
+
+def admin_support_dashboard(request):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    query = request.GET.get('q', '')
+    users = User.objects.filter(
+        Q(sent_messages__receiver=request.user) |
+        Q(received_messages__sender=request.user)
+    ).distinct()
+
+    if query:
+        users = users.filter(username__icontains=query)
+
+    paginator = Paginator(users, 10)  # 10 users per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, 'admins/admin_chat.html', {
+        'users': page_obj.object_list,
+        'page_obj': page_obj,
+        'query': query
+    })
+
+
+
+def mining(request):
+    return render(request , 'main/mining.html')
+
+
+def staking(request):
+    return render(request , 'index/staking.html')

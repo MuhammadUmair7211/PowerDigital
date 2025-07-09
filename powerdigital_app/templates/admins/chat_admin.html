@@ -1,0 +1,202 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #0f172a;
+      font-family: 'Inter', sans-serif;
+      color: #f1f5f9;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+      background-color: #1e293b;
+      padding: 20px;
+      border-radius: 14px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .chat-header a {
+      margin-right: 12px;
+      color: #cbd5e1;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .chat-header h3 {
+      margin: 0;
+      color: #60a5fa;
+      font-size: 20px;
+      font-weight: 600;
+      margin-left: 200px;
+    }
+
+    .chat-box {
+      max-height: 400px;
+      overflow-y: auto;
+      background-color: #192231;
+      border: 1px solid #2c3e50;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message-row {
+      display: flex;
+    }
+
+    .message-row.admin {
+      justify-content: flex-start;
+    }
+
+    .message-row.you {
+      justify-content: flex-end;
+    }
+
+    .message-bubble {
+      max-width: 70%;
+      padding: 12px 18px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      word-wrap: break-word;
+      background-color: #334155;
+      color: #f1f5f9;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      position: relative;
+    }
+
+    .message-row.you .message-bubble {
+      background-color: #334772;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message-row.admin .message-bubble {
+      background-color: #475569;
+      border-bottom-left-radius: 4px;
+    }
+
+    .sender {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #cbd5e1;
+      margin-bottom: 4px;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    textarea {
+      width: 95%;
+      height: 90px;
+      padding: 14px;
+      font-size: 14px;
+      border-radius: 10px;
+      background-color: #192231;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      resize: none;
+    }
+
+    textarea:focus {
+      border-color: #3b82f6;
+      outline: none;
+    }
+
+    button {
+      margin-top: 12px;
+      background-color: #1d4366;
+      color: #fff;
+      padding: 12px 26px;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #15324e;
+    }
+
+    @media (max-width: 600px) {
+      .message-bubble {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <br>
+  <div class="container">
+
+    <!-- Header with back button and username -->
+    <div class="chat-header">
+      <a href="javascript:history.back()" title="Go back">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor"
+             class="bi bi-arrow-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd"
+                d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+        </svg>
+      </a>
+      <h3>Chat with {{ user.username }}</h3>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-box" id="chat-box">
+      {% for msg in messages %}
+        <div class="message-row {% if msg.sender == request.user %}you{% else %}admin{% endif %}">
+          <div class="message-bubble">
+            <span class="sender">@{{ msg.sender.username }}</span>
+            {{ msg.message }}
+            <div class="timestamp">{{ msg.timestamp|date:"M d, H:i" }}</div>
+          </div>
+        </div>
+      {% empty %}
+        <p>No messages yet.</p>
+      {% endfor %}
+    </div>
+
+    <!-- Form -->
+    <form method="post">
+      {% csrf_token %}
+      <textarea name="message" placeholder="Type your message..."></textarea>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox) {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>

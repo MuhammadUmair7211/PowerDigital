@@ -1,0 +1,177 @@
+{% load static %}
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Your Withdrawals</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: rgb(18, 20, 32);
+            color: white;
+        }
+
+        .card-box {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.4);
+        }
+
+        a.btn-add {
+      background-color: #305b8b;
+      color: white;
+      padding: 10px 16px;
+      text-decoration: none;
+      border-radius: 6px;
+      display: inline-block;
+    }
+
+    a.btn-add:hover {
+      background-color: #3b6da7;
+    }
+
+        .table thead {
+            background-color: #334155;
+        }
+
+        .table tbody tr {
+            background-color: #1e3a8a;
+            transition: background-color 0.3s;
+        }
+
+        .table tbody tr:hover {
+            background-color: #2563eb;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #3b82f6;
+            vertical-align: middle;
+            word-break: break-word;
+            
+           
+        }
+         .table td, .table th {
+            padding: 10px;
+            vertical-align: middle;
+            font-size: 15px;
+            color: white;
+            background-color: #243447;
+        }
+
+        .pagination .page-link {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid #334155;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #38bdf8;
+            border-color: #38bdf8;
+            color: #0f172a;
+        }
+
+        .back-link svg {
+            vertical-align: middle;
+        }
+
+        @media (max-width: 576px) {
+            h3 {
+                font-size: 1.3rem;
+            }
+            .table th, .table td {
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container py-4 px-3">
+    <div class="card-box">
+
+        <!-- Header and Back -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+            <div class="d-flex align-items-center mb-2 mb-sm-0">
+                <a href="javascript:history.back()" class="me-3 text-white-50 text-decoration-none back-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                         class="bi bi-arrow-left" viewBox="0 0 16 16">
+                        <path fill-rule="evenodd"
+                              d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+                    </svg>
+                </a>
+                <h4 class="mb-0 ms-2">Your Withdrawals</h4>
+            </div>
+
+            <a href="{% url 'request_withdrawal' %}" class="btn-add">+ Add</a>
+        </div>
+
+        {% if withdrawal %}
+            <div class="table-responsive">
+                <table class="table table-bordered text-white align-middle">
+                    <thead>
+                        <tr>
+                            <th>Currency</th>
+                            <th>Amount</th>
+                            <th>Withdraw Coin Address</th>
+                            <th>Network</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for w in withdrawal %}
+                        <tr>
+                            <td>{{ w.currency }}</td>
+                            <td>{{ w.amount }}</td>
+                            <td>{{ w.address }}</td>
+                            <td>{{ w.network }}</td>
+                            <td>{{ w.created_at|date:"Y-m-d H:i" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if withdrawal.has_other_pages %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if withdrawal.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ withdrawal.previous_page_number }}">Previous</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    {% endif %}
+
+                    {% for num in withdrawal.paginator.page_range %}
+                        {% if withdrawal.number == num %}
+                            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                        {% elif num > withdrawal.number|add:'-2' and num < withdrawal.number|add:'2' %}
+                            <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if withdrawal.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ withdrawal.next_page_number }}">Next</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link">Next</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+
+        {% else %}
+            <p class="text-center text-muted">You have not made any withdrawal requests yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+</body>
+</html>

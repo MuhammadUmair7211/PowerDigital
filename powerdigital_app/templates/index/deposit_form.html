@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deposit Funds</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: rgb(18, 20, 32);
+      color: white;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .form-container {
+      background-color: #1e293b;
+      padding: 40px;
+      border-radius: 12px;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    label {
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    input[type="file"] {
+    background-color: #1e293b;
+    color: white;
+    border: 2px dashed #555;
+    padding: 12px;
+    width: 100%;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.3s;
+  }
+
+  input[type="file"]:hover {
+    border-color: #888;
+  }
+
+  input[type="file"]::file-selector-button {
+    background-color: #2f4480;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+
+  input[type="file"]::file-selector-button:hover {
+    background-color: #3f5a9b;
+  }
+
+    input, select, textarea {
+      background-color: #1e293b;
+      color: white;
+      border: 1px solid #555;
+      border-radius: 6px;
+      padding: 10px;
+      width: 100%;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #888;
+    }
+
+    .btn-submit {
+      background-color: #2f4480;
+      color: white;
+      border: none;
+      padding: 10px;
+      border-radius: 6px;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .btn-submit:hover {
+      background-color: #3f5a9b;
+    }
+  </style>
+</head>
+<body class="d-flex justify-content-center align-items-center">
+    
+
+  <div class="form-container">
+    
+    <div class="d-flex align-items-center justify-content-between mb-4">
+    <!-- Back Arrow with Website Color -->
+    <a href="javascript:history.back()" class="text-white">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+            class="bi bi-arrow-left" viewBox="0 0 16 16">
+        <path fill-rule="evenodd"
+                d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+        </svg>
+    </a>
+
+    <!-- Centered Title -->
+    <div class="flex-grow-1 text-center">
+        <h2 class="mb-0 text-white">Deposit Funds</h2>
+    </div>
+
+    <!-- Spacer -->
+    <div style="width: 24px;"></div>
+    </div>
+
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <div class="mb-3">
+        <label for="{{ form.currency.id_for_label }}">Currency</label>
+        {{ form.currency }}
+        {% if form.currency.errors %}
+          <div class="text-danger mt-1">{{ form.currency.errors }}</div>
+        {% endif %}
+      </div>
+
+      <div class="mb-3">
+        <label for="{{ form.amount.id_for_label }}">Amount</label>
+        {{ form.amount }}
+        {% if form.amount.errors %}
+          <div class="text-danger mt-1">{{ form.amount.errors }}</div>
+        {% endif %}
+      </div>
+
+     <div class="mb-4">
+        <label for="{{ form.payment_proof.id_for_label }}" class="form-label fw-semibold">
+            Payment Proof
+        </label>
+
+        <div class="custom-file-upload position-relative">
+            {{ form.payment_proof }}
+        </div>
+
+        {% if form.payment_proof.errors %}
+            <div class="text-danger mt-2">{{ form.payment_proof.errors }}</div>
+        {% endif %}
+     </div>
+
+      <button type="submit" class="btn-submit">Submit Deposit</button>
+    </form>
+  </div>
+
+</body>
+</html>

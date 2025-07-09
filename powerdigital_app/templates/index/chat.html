@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Support Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      font-family: 'Inter', sans-serif;
+      background-color: #0f172a;
+      color: #f1f5f9;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: auto;
+      background-color: #1e293b;
+      padding: 35px 30px;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7);
+      zoom: 90%;
+    }
+
+    h2, h3 {
+      text-align: center;
+      color: #60a5fa;
+      margin-bottom: 30px;
+      font-weight: 700;
+    }
+
+    .admin-list ul {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      list-style: none;
+      padding: 0;
+      margin-bottom: 35px;
+    }
+
+    .admin-list a {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      background-color: #1e293b;
+      border-radius: 10px;
+      color: #f1f5f9;
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid #3f3f3f;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+
+    .admin-list a:hover {
+      background-color: #0f172a;
+      transform: translateY(-2px);
+    }
+
+    .chat-box {
+      height: 360px;
+      overflow-y: auto;
+      padding: 20px;
+      background-color: #192231;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      margin-bottom: 25px;
+      scroll-behavior: smooth;
+    }
+
+    .message-row {
+      display: flex;
+      margin-bottom: 20px;
+    }
+
+    .message-row.you {
+      justify-content: flex-end;
+    }
+
+    .chat-message {
+      max-width: 75%;
+      padding: 12px 18px;
+      font-size: 14px;
+      border-radius: 16px;
+      position: relative;
+      background-color: #262626;
+      color: #f8fafc;
+      line-height: 1.6;
+      word-break: break-word;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .message-row.you .chat-message {
+      background-color: #2f3d52;
+      color: #ffffff;
+      border-bottom-right-radius: 4px;
+      border-top-left-radius: 16px;
+    }
+
+    .message-row:not(.you) .chat-message {
+      background-color: #42464d;
+      border-bottom-left-radius: 4px;
+      border-top-right-radius: 16px;
+    }
+
+    .chat-message .sender {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+    }
+
+    .chat-form {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .chat-form .input-row {
+      width: 100%;
+      display: flex;
+      gap: 10px;
+    }
+
+    .chat-form textarea {
+      flex: 1;
+      height: 100px;
+      padding: 14px;
+      font-size: 14px;
+      border-radius: 10px;
+      background-color: #192231;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      resize: none;
+      transition: border 0.3s;
+    }
+
+    .chat-form textarea:focus {
+      border-color: #3b82f6;
+      outline: none;
+    }
+
+    .chat-form button {
+      padding: 12px 24px;
+      font-size: 15px;
+      font-weight: 600;
+      background-color: #0d162b; 
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .chat-form button:hover {
+      background-color: #132644;
+      transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+      .chat-form .input-row {
+        flex-direction: column;
+      }
+
+      .chat-form button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+   <div style="display: flex; align-items: center; margin-bottom: 24px; gap: 350px;">
+    <a href="{% url 'home' %}" style="color: #94a3b8; text-decoration: none; display: inline-flex; align-items: center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+            class="bi bi-arrow-left" viewBox="0 0 16 16">
+        <path fill-rule="evenodd"
+                d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+        </svg>
+    </a>
+    <h3 style="margin: 0; color: #f1f5f9;">Support Chat</h3>
+    </div>
+
+    <div class="admin-list">
+      <ul>
+        {% for admin in admin_users %}
+          <li>
+            <a href="?admin_id={{ admin.id }}">
+              {{ admin.username }}
+            </a>
+          </li>
+        {% empty %}
+          <li>No admins available.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    {% if selected_admin %}
+      <h3>Chat with {{ selected_admin.username }}</h3>
+
+      <div class="chat-box" id="chat-box">
+        {% for msg in messages %}
+          <div class="message-row {% if msg.sender == request.user %}you{% endif %}">
+            <div class="chat-message">
+              <span class="sender">@{{ msg.sender.username }}</span>
+              {{ msg.message }}
+            </div>
+          </div>
+        {% empty %}
+          <p>No messages yet.</p>
+        {% endfor %}
+      </div>
+
+      <form method="post" class="chat-form">
+        {% csrf_token %}
+        <div class="input-row">
+          <textarea name="message" placeholder="Type your message..."></textarea>
+          <button type="submit">Send</button>
+        </div>
+      </form>
+    {% endif %}
+
+  </div>
+
+  <script>
+    // Auto-scroll to latest message
+    const chatBox = document.getElementById('chat-box');
+    if (chatBox) {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+  </script>
+
+</body>
+</html>

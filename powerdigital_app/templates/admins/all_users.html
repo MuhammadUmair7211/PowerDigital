@@ -1,0 +1,233 @@
+{% extends 'admins/admin_base.html' %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>All Registered Users</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: auto;
+      background-color: #1e293b;
+      padding: 30px 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 28px;
+      color: #38bdf8;
+      margin-bottom: 30px;
+    }
+
+    .search-form {
+      text-align: center;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .search-input {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #374151;
+      background-color: #0f172a;
+      color: #f8fafc;
+      width: 240px;
+    }
+
+    .search-button {
+      background-color: #143b8f;
+      border: none;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    thead {
+      background-color: #334155;
+    }
+
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid #2c3e50;
+    }
+
+    th {
+      font-size: 13px;
+      text-transform: uppercase;
+      color: #94a3b8;
+    }
+
+    tr:hover {
+      background-color: #243447;
+    }
+
+    input[type="number"] {
+      width: 80px;
+      padding: 6px;
+      border-radius: 6px;
+      border: 1px solid #475569;
+      background-color: #0f172a;
+      color: #f8fafc;
+      font-size: 14px;
+    }
+
+    button {
+      padding: 6px 10px;
+      background-color: #13465e;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .text-center {
+      text-align: center;
+      color: #94a3b8;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      gap: 8px;
+    }
+
+    .pagination a, .pagination span {
+      padding: 8px 14px;
+      background-color: #334155;
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+    }
+
+    .pagination .current {
+      background-color: #143b8f;
+    }
+
+    @media (max-width: 600px) {
+      h2 {
+        font-size: 22px;
+      }
+
+      .search-input {
+        width: 100%;
+      }
+
+      .search-button {
+        width: 100%;
+      }
+
+      table, thead, tbody, th, td, tr {
+        font-size: 13px;
+      }
+
+      input[type="number"] {
+        width: 100%;
+      }
+
+      .pagination {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <br>
+  <div class="container">
+    <h2>👥 All Registered Users</h2>
+
+    <!-- Search -->
+    <form method="get" class="search-form">
+      <input type="text" name="q" value="{{ query }}" class="search-input" placeholder="Search by username">
+      <button type="submit" class="search-button">Search</button>
+    </form>
+
+    <div class="table-responsive">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Credit</th>
+            <th>Joined</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for profile in page_obj %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ profile.user.username }}</td>
+            <td>{{ profile.user.email }}</td>
+            <td>
+              <form method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="profile_id" value="{{ profile.id }}">
+                <input type="number" name="credit_score" value="{{ profile.credit_score }}" min="0" max="9999">
+            </td>
+            <td>{{ profile.user.date_joined|date:"Y-m-d H:i" }}</td>
+            <td>
+                <button type="submit">Update</button>
+              </form>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center">No users found.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+      <div class="pagination">
+        {% if page_obj.has_previous %}
+          <a href="?q={{ query }}&page=1">First</a>
+          <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
+        {% endif %}
+
+        <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+          <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
+          <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}">Last</a>
+        {% endif %}
+      </div>
+  
+  </div>
+</body>
+</html>
+{% endblock %}

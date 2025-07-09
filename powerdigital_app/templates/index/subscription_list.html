@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Available Subscriptions</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .header a {
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .header a:hover {
+      color: #ffffff;
+    }
+
+    .header h2 {
+      font-size: 1.5rem;
+      color: #ffffff;
+      margin: 0;
+      margin-left: 30%;
+    }
+
+    .subscription-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .subscription-card:hover {
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-content {
+      display: flex;
+      flex-direction: row;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .card-image {
+      width: 96px;
+      height: 96px;
+      overflow: hidden;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+      flex-shrink: 0;
+    }
+
+    .card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-details {
+      flex-grow: 1;
+    }
+
+    .card-details h3 {
+      margin: 0 0 6px;
+      font-size: 1.3rem;
+      color: #ffffff;
+    }
+
+    .card-details p {
+      margin: 4px 0;
+      font-size: 0.95rem;
+      color: #cbd5e1;
+    }
+
+    .price {
+      font-weight: bold;
+      color: #10b981;
+    }
+
+    .dates {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+
+    .card-action {
+      text-align: right;
+    }
+
+    .card-action button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+
+    .card-action button:hover {
+      background-color: #1d4ed8;
+    }
+
+    .card-action .subscribed {
+      background-color: #1a523f;
+      cursor: not-allowed;
+    }
+
+    .card-action a {
+      color: #60a5fa;
+      font-size: 0.9rem;
+      text-decoration: none;
+    }
+
+    .no-items {
+      text-align: center;
+      margin-top: 40px;
+      color: #64748b;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .card-content {
+        flex-direction: column;
+        text-align: center;
+      }
+
+      .card-action {
+        text-align: center;
+        margin-top: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <a href="javascript:history.back()" title="Go Back">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+             class="bi bi-arrow-left" viewBox="0 0 16 16">
+          <path fill-rule="evenodd"
+                d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+        </svg>
+      </a>
+      <h2>📦 Available Subscriptions</h2>
+    </div>
+
+    {% for item in items %}
+      <div class="subscription-card">
+        <div class="card-content">
+          <div class="card-image">
+            <img src="{{ item.image.url }}" alt="{{ item.name }}">
+          </div>
+
+          <div class="card-details">
+            <h3>{{ item.name }}</h3>
+            <p>{{ item.description|truncatechars:100 }}</p>
+            <p class="price">${{ item.price }}</p>
+            <p class="dates">
+              Available: {{ item.available_from|date:"M d, Y H:i" }} – {{ item.available_until|date:"M d, Y H:i" }}
+            </p>
+          </div>
+
+          <div class="card-action">
+            {% if user.is_authenticated %}
+              {% if item.id in subscribed_item_ids %}
+                <button type="button" class="subscribed" disabled>✅ Subscribed</button>
+              {% else %}
+                <form method="post" action="{% url 'subscribe_to_item' item.id %}">
+                  {% csrf_token %}
+                  <button type="submit">Subscribe</button>
+                </form>
+              {% endif %}
+            {% else %}
+              <a href="{% url 'login' %}">Login to subscribe</a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <p class="no-items">No subscription items available at the moment.</p>
+    {% endfor %}
+  </div>
+
+</body>
+</html>

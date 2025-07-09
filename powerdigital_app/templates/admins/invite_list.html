@@ -1,0 +1,148 @@
+{% extends 'admins/admin_base.html' %}
+
+{% block content %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pending Invitations</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+   
+    }
+
+    h2 {
+      text-align: center;
+      font-size: 2rem;
+      color: #38bdf8;
+      margin-bottom: 30px;
+    }
+
+    .table-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      background-color: #1e293b;
+      padding: 20px 30px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background-color: #334155;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      padding: 12px;
+      border-bottom: 1px solid hsl(215, 19%, 35%);
+      text-align: left; /* or use 'center' or 'right' */
+      vertical-align: middle;
+    }
+
+    td {
+      padding: 14px 12px;
+      border-bottom: 1px solid #334155;
+      font-size: 0.95rem;
+     
+
+    }
+
+    tr:hover {
+      background-color: #2c3e50;
+    }
+
+    a.approve-button {
+      display: inline-block;
+      padding: 6px 12px;
+      background-color: #035c63;
+      color: white;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.9rem;
+      transition: background-color 0.2s ease;
+    }
+
+    a.approve-button:hover {
+      background-color: #0f838b;
+    }
+
+    @media (max-width: 768px) {
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+
+      tr {
+        margin-bottom: 15px;
+      }
+
+      td {
+        
+        padding-left: 50%;
+        position: relative;
+   
+      }
+
+      td::before {
+        position: absolute;
+        left: 12px;
+        top: 14px;
+        font-weight: bold;
+        color: #94a3b8;
+        font-size: 0.85rem;
+      }
+
+      td:nth-child(1)::before { content: "User"; }
+      td:nth-child(2)::before { content: "Email"; }
+      td:nth-child(3)::before { content: "Invite Code"; }
+      td:nth-child(4)::before { content: "Action"; }
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Pending Accounts</h2>
+
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>Invite Code</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for profile in profiles %}
+          <tr>
+            <td>{{ profile.user.username }}</td>
+            <td>{{ profile.user.email }}</td>
+            <td>{{ profile.invite_code }}</td>
+            <td>
+              <a href="{% url 'approve_user' profile.id %}" class="approve-button">✅ Approve</a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" style="text-align:center; padding: 20px; color: #94a3b8;">
+              No pending invitations found.
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>
+
+{% endblock %}

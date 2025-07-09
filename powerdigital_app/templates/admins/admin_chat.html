@@ -1,0 +1,172 @@
+{% extends 'admins/admin_base.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Conversations</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0f172a;
+      font-family: 'Inter', sans-serif;
+      color: #f8fafc;
+    }
+
+    .container {
+      max-width: 100%;
+      width: 90%;
+      max-width: 600px;
+      margin: auto;
+      background-color: #1e293b;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+      padding: 30px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #60a5fa;
+      margin-bottom: 20px;
+    }
+
+    form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    input[type="text"] {
+      
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background-color: #0f172a;
+      color: #f8fafc;
+      width: 230px;
+      
+    }
+
+    button {
+      padding: 10px 16px;
+      border: none;
+      background-color: #20335e;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .user-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .user-item {
+      background-color: #273549;
+      padding: 15px 20px;
+      border-radius: 10px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .user-item:hover {
+      background-color: #334155;
+      transform: translateY(-2px);
+    }
+
+    .user-item a {
+      color: #f1f5f9;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 16px;
+      display: block;
+      word-wrap: break-word;
+    }
+
+    .empty-message {
+      text-align: center;
+      color: #94a3b8;
+      margin-top: 20px;
+      font-style: italic;
+    }
+
+    .pagination {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      gap: 8px;
+    }
+
+    .pagination a, .pagination span {
+      padding: 6px 12px;
+      background-color: #334155;
+      color: white;
+      text-decoration: none;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .pagination .current {
+      background-color: #20335e;
+      font-weight: bold;
+    }
+
+    @media (max-width: 500px) {
+      .user-item a {
+        font-size: 14px;
+      }
+      .container {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+<br>
+<div class="container">
+  
+  <h2>👥 User Conversations</h2>
+  <br>
+  <!-- Search -->
+  <form method="get">
+    <input type="text" name="q" placeholder="Search by username" value="{{ query }}">
+    <button type="submit">Search</button>
+  </form>
+
+  <!-- User List -->
+  <div class="user-list">
+    {% for user in users %}
+      <div class="user-item">
+        <a href="{% url 'admin_chat_with_user' user.id %}">{{ user.username }}</a>
+      </div>
+    {% empty %}
+      <p class="empty-message">No user conversations found.</p>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+    <div class="pagination">
+      {% if page_obj.has_previous %}
+        <a href="?q={{ query }}&page=1">First</a>
+        <a href="?q={{ query }}&page={{ page_obj.previous_page_number }}">Previous</a>
+      {% endif %}
+
+      <span class="current">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+
+      {% if page_obj.has_next %}
+        <a href="?q={{ query }}&page={{ page_obj.next_page_number }}">Next</a>
+        <a href="?q={{ query }}&page={{ page_obj.paginator.num_pages }}">Last</a>
+      {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>
+{% endblock %}

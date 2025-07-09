@@ -1,0 +1,176 @@
+{% extends 'admins/admin_base.html' %}
+
+{% block content %}
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Advertisement Banners</title>
+  <style>
+    body {
+      background-color: #0f172a;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #f1f5f9;
+    }
+
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background-color: #1e293b;
+      padding: 35px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+
+    .back-btn {
+      text-decoration: none;
+      color: #94a3b8;
+      margin-right: 15px;
+      transition: color 0.3s ease;
+    }
+
+    .back-btn:hover {
+      color: #38bdf8;
+    }
+
+    .header h3 {
+      margin: 0;
+      color: #38bdf8;
+      font-size: 24px;
+      margin-left: 250px;
+    }
+
+    .upload-group {
+      margin-bottom: 25px;
+    }
+
+    .upload-label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      font-size: 15px;
+      color: #cbd5e1;
+    }
+
+    .upload-preview {
+      width: 100%;
+      height: 120px;
+      background-color: #0f172a;
+      border: 1px dashed #475569;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 10px;
+    }
+
+    .upload-preview img {
+      max-height: 100%;
+      max-width: 100%;
+      display: block;
+    }
+
+    .custom-file-btn {
+      padding: 10px 20px;
+      background-color: #26416d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background-color 0.3s ease;
+    }
+
+    .custom-file-btn:hover {
+      background-color: #2e384d;
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .submit-btn {
+      width: 40%;
+      padding: 14px;
+      background-color: #143a66;
+      border: none;
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-left: 200px;
+    }
+
+    .submit-btn:hover {
+      background-color: #0a3244;
+    }
+  </style>
+</head>
+<body>
+
+ <br><br> 
+
+<div class="container">
+  <div class="header">
+    
+    <h3>Add Advertisement</h3>
+  </div>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    {% for field in form %}
+    <div class="upload-group">
+      <label class="upload-label" for="file-{{ forloop.counter0 }}">Banner {{ forloop.counter }}</label>
+      <div class="upload-preview" id="preview{{ forloop.counter }}">
+        <span style="color: #64748b;">No Image Selected</span>
+      </div>
+      <input type="file" id="file-{{ forloop.counter0 }}" name="{{ field.name }}" accept="image/*"
+             onchange="showPreview(this, {{ forloop.counter }})">
+      <button type="button" class="custom-file-btn"
+              onclick="document.getElementById('file-{{ forloop.counter0 }}').click();">
+        📁 Select Banner {{ forloop.counter }}
+      </button>
+    </div>
+    {% endfor %}
+
+    <button type="submit" class="submit-btn">Upload Banners</button>
+  </form>
+</div>
+<br><br>
+
+<script>
+  function showPreview(input, index) {
+    const file = input.files[0];
+    const preview = document.getElementById('preview' + index);
+    preview.innerHTML = '';
+
+    if (file && file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        preview.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      preview.innerHTML = '<span style="color: #64748b;">No Image Selected</span>';
+    }
+  }
+</script>
+
+</body>
+</html>
+
+{% endblock %}
