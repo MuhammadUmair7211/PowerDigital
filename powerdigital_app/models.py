@@ -8,6 +8,7 @@ from django.contrib.auth.hashers import make_password, check_password
 
 class TradeOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     pair = models.CharField(max_length=20, default="BTC/USDT")
     direction = models.CharField(max_length=10, choices=[("Buy Up", "Buy Up"), ("Buy Down", "Buy Down")])
     amount = models.DecimalField(max_digits=20, decimal_places=8)

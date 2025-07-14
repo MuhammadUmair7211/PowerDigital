@@ -20,6 +20,7 @@ from functools import wraps
 from .forms import TradeOrderForm , SubscriptionItemForm ,  BannerSetForm , AdminRegisterForm , WithdrawalRequestForm , DepositForm , UserBankDetailForm , PasswordResetForm , IdentityVerificationForm
 
 
+
 def admin_required(function):
     @wraps(function)
     def _wrapped_view(request, *args, **kwargs):
@@ -124,8 +125,8 @@ def get_profit_percentage(expiry_time):
 
 
 
+@transaction.atomic
 def place_trade(request):
-
     if request.method == "POST":
         pair = request.POST.get('trading_pair')
         direction = request.POST.get('direction')
@@ -135,20 +136,35 @@ def place_trade(request):
         profit_percent = get_profit_percentage(expiry_time)
         profit = amount * profit_percent
 
-        print(profit)
+        profile = Profile.objects.select_for_update().get(user=request.user)
+        total_balance = profile.total_balance
 
+        # Check if user has enough balance
+        if total_balance < amount:
+            return JsonResponse({'success': False, 'error': 'Insufficient balance'})
+
+        # Deduct amount from total_deposit first, then from total_profit if needed
+        remaining_amount = amount
+        if profile.total_deposit >= remaining_amount:
+            profile.total_deposit -= remaining_amount
+        else:
+            remaining_amount -= profile.total_deposit
+            profile.total_deposit = 0
+            profile.total_profit -= remaining_amount
+
+        # Add profit
+        profile.total_profit += profit
+        profile.save()
+
+        # Save trade order
         TradeOrder.objects.create(
             user=request.user,
             pair=pair,
             direction="Buy Up" if direction == "up" else "Buy Down",
             amount=amount,
-            expiry_time=expiry_time
+            expiry_time=expiry_time,
+            balance=total_balance
         )
-
-        profile = Profile.objects.select_for_update().get(user=request.user)
-        profile.total_profit += profit
-        profile.save()
-
 
         return JsonResponse({'success': True, 'profit_added': str(profit)})
 

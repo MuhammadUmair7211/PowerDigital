@@ -1,253 +1,424 @@
-{% extends 'main/base.html' %}
-
-
-{% block content %}
-
+{% extends 'main/base.html' %} {% block content %}
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crypto Trade</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      background-color: #0f172a;
-      font-family: 'Inter', sans-serif;
-    }
-    .amount-btn {
-      transition: background-color 0.2s ease;
-    }
-    .amount-btn:focus {
-      outline: 2px solid #3b82f6;
-    }
-  </style>
-</head>
-<body class="text-white p-4">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Crypto Trade</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			body {
+				background-color: #0f172a;
+				font-family: "Inter", sans-serif;
+			}
+			.amount-btn {
+				transition: background-color 0.2s ease;
+			}
+			.amount-btn:focus {
+				outline: 2px solid #3b82f6;
+			}
+		</style>
+	</head>
+	<body class="text-white p-4">
+		<div
+			class="tradingview-widget-container mb-8 shadow-xl rounded-lg overflow-hidden"
+		>
+			<div id="tradingview_1" style="height: 540px"></div>
+			<script
+				type="text/javascript"
+				src="https://s3.tradingview.com/tv.js"
+			></script>
+			<script type="text/javascript">
+				let tvWidget;
 
-<div class="tradingview-widget-container mb-8 shadow-xl rounded-lg overflow-hidden">
-  <div id="tradingview_1" style="height: 540px;"></div>
-  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-  <script type="text/javascript">
-    let tvWidget;
+				function initTradingViewWidget(symbol) {
+					tvWidget = new TradingView.widget({
+						container_id: "tradingview_1",
+						width: "100%",
+						height: 540,
+						symbol: symbol,
+						interval: "5",
+						timezone: "Etc/UTC",
+						theme: "dark",
+						style: "1",
+						locale: "en",
+						toolbar_bg: "#1e293b",
+						enable_publishing: false,
+						hide_top_toolbar: false,
+						withdateranges: true,
+						hide_side_toolbar: false,
+						allow_symbol_change: true,
+						studies: ["MACD@tv-basicstudies"],
+						details: true,
+						hotlist: true,
+					});
+				}
 
-    function initTradingViewWidget(symbol) {
-      tvWidget = new TradingView.widget({
-        "container_id": "tradingview_1",
-        "width": "100%",
-        "height": 540,
-        "symbol": symbol,
-        "interval": "5",
-        "timezone": "Etc/UTC",
-        "theme": "dark",
-        "style": "1",
-        "locale": "en",
-        "toolbar_bg": "#1e293b",
-        "enable_publishing": false,
-        "hide_top_toolbar": false,
-        "withdateranges": true,
-        "hide_side_toolbar": false,
-        "allow_symbol_change": true,
-        "studies": ["MACD@tv-basicstudies"],
-        "details": true,
-        "hotlist": true
-      });
-    }
+				// Initial chart load with default symbol
+				document.addEventListener("DOMContentLoaded", function () {
+					initTradingViewWidget("COINBASE:BTCUSDT");
 
-    // Initial chart load with default symbol
-    document.addEventListener("DOMContentLoaded", function() {
-      initTradingViewWidget("COINBASE:BTCUSDT");
+					document
+						.getElementById("trading_pair")
+						.addEventListener("change", function () {
+							const selected = this.value; // e.g., BTC/USDT
+							const symbol = "COINBASE:" + selected.replace("/", "");
+							if (tvWidget && typeof tvWidget.setSymbol === "function") {
+								tvWidget.setSymbol(symbol, "5");
+							} else {
+								// fallback if widget not yet initialized
+								initTradingViewWidget(symbol);
+							}
+						});
+				});
+			</script>
+		</div>
 
-      document.getElementById("trading_pair").addEventListener("change", function() {
-        const selected = this.value; // e.g., BTC/USDT
-        const symbol = "COINBASE:" + selected.replace("/", "");
-        if (tvWidget && typeof tvWidget.setSymbol === "function") {
-          tvWidget.setSymbol(symbol, "5");
-        } else {
-          // fallback if widget not yet initialized
-          initTradingViewWidget(symbol);
-        }
-      });
-    });
-  </script>
-</div>
+		<form
+			id="tradeForm"
+			method="POST"
+			class="max-w-3xl mx-auto bg-gray-900 border border-gray-700 p-6 rounded-xl shadow-lg"
+		>
+			{% csrf_token %}
+			<h2 class="text-2xl font-bold mb-6 text-center">📜 Place Your Trade</h2>
 
-<form id="tradeForm" class="max-w-3xl mx-auto bg-gray-900 border border-gray-700 p-6 rounded-xl shadow-lg">
-  {% csrf_token %}
-  <h2 class="text-2xl font-bold mb-6 text-center">📜 Place Your Trade</h2>
+			<div class="mb-6">
+				<label
+					for="trading_pair"
+					class="block mb-2 text-sm font-medium text-gray-300"
+					>Select Trading Pair</label
+				>
+				<select
+					id="trading_pair"
+					name="trading_pair"
+					class="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600"
+				>
+					<option value="BTC/USDT">BTC/USDT</option>
+					<option value="ETH/USDT">ETH/USDT</option>
+					<option value="BNB/USDT">BNB/USDT</option>
+					<option value="SOL/USDT">SOL/USDT</option>
+					<option value="XRP/USDT">XRP/USDT</option>
+					<option value="DOGE/USDT">DOGE/USDT</option>
+					<option value="TON/USDT">TON/USDT</option>
+					<option value="ADA/USDT">ADA/USDT</option>
+					<option value="AVAX/USDT">AVAX/USDT</option>
+					<option value="SHIB/USDT">SHIB/USDT</option>
+					<option value="DOT/USDT">DOT/USDT</option>
+					<option value="TRX/USDT">TRX/USDT</option>
+					<option value="LINK/USDT">LINK/USDT</option>
+					<option value="MATIC/USDT">MATIC/USDT</option>
+					<option value="WBTC/USDT">WBTC/USDT</option>
+					<option value="BCH/USDT">BCH/USDT</option>
+					<option value="LTC/USDT">LTC/USDT</option>
+					<option value="ICP/USDT">ICP/USDT</option>
+					<option value="UNI/USDT">UNI/USDT</option>
+					<option value="NEAR/USDT">NEAR/USDT</option>
+					<option value="LEO/USDT">LEO/USDT</option>
+					<option value="ETC/USDT">ETC/USDT</option>
+					<option value="XLM/USDT">XLM/USDT</option>
+					<option value="APT/USDT">APT/USDT</option>
+					<option value="IMX/USDT">IMX/USDT</option>
+					<option value="ARB/USDT">ARB/USDT</option>
+					<option value="FIL/USDT">FIL/USDT</option>
+					<option value="CRO/USDT">CRO/USDT</option>
+					<option value="HBAR/USDT">HBAR/USDT</option>
+					<option value="VET/USDT">VET/USDT</option>
+					<option value="TUSD/USDT">TUSD/USDT</option>
+					<option value="RNDR/USDT">RNDR/USDT</option>
+					<option value="INJ/USDT">INJ/USDT</option>
+					<option value="MKR/USDT">MKR/USDT</option>
+					<option value="RUNE/USDT">RUNE/USDT</option>
+					<option value="AAVE/USDT">AAVE/USDT</option>
+					<option value="SAND/USDT">SAND/USDT</option>
+					<option value="EGLD/USDT">EGLD/USDT</option>
+					<option value="QNT/USDT">QNT/USDT</option>
+					<option value="FLOW/USDT">FLOW/USDT</option>
+					<option value="GRT/USDT">GRT/USDT</option>
+					<option value="AXS/USDT">AXS/USDT</option>
+					<option value="CHZ/USDT">CHZ/USDT</option>
+					<option value="XEC/USDT">XEC/USDT</option>
+					<option value="THETA/USDT">THETA/USDT</option>
+					<option value="EOS/USDT">EOS/USDT</option>
+					<option value="KAVA/USDT">KAVA/USDT</option>
+					<option value="PAXG/USDT">PAXG/USDT</option>
+					<option value="KCS/USDT">KCS/USDT</option>
+					<option value="ZEC/USDT">ZEC/USDT</option>
+				</select>
+			</div>
 
-  <div class="mb-6">
-    <label for="trading_pair" class="block mb-2 text-sm font-medium text-gray-300">Select Trading Pair</label>
-    <select id="trading_pair" name="trading_pair" class="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600">
-      <option value="BTC/USDT">BTC/USDT</option>
-      <option value="ETH/USDT">ETH/USDT</option>
-      <option value="BNB/USDT">BNB/USDT</option>
-      <option value="SOL/USDT">SOL/USDT</option>
-      <option value="XRP/USDT">XRP/USDT</option>
-      <option value="DOGE/USDT">DOGE/USDT</option>
-      <option value="TON/USDT">TON/USDT</option>
-      <option value="ADA/USDT">ADA/USDT</option>
-      <option value="AVAX/USDT">AVAX/USDT</option>
-      <option value="SHIB/USDT">SHIB/USDT</option>
-      <option value="DOT/USDT">DOT/USDT</option>
-      <option value="TRX/USDT">TRX/USDT</option>
-      <option value="LINK/USDT">LINK/USDT</option>
-      <option value="MATIC/USDT">MATIC/USDT</option>
-      <option value="WBTC/USDT">WBTC/USDT</option>
-      <option value="BCH/USDT">BCH/USDT</option>
-      <option value="LTC/USDT">LTC/USDT</option>
-      <option value="ICP/USDT">ICP/USDT</option>
-      <option value="UNI/USDT">UNI/USDT</option>
-      <option value="NEAR/USDT">NEAR/USDT</option>
-      <option value="LEO/USDT">LEO/USDT</option>
-      <option value="ETC/USDT">ETC/USDT</option>
-      <option value="XLM/USDT">XLM/USDT</option>
-      <option value="APT/USDT">APT/USDT</option>
-      <option value="IMX/USDT">IMX/USDT</option>
-      <option value="ARB/USDT">ARB/USDT</option>
-      <option value="FIL/USDT">FIL/USDT</option>
-      <option value="CRO/USDT">CRO/USDT</option>
-      <option value="HBAR/USDT">HBAR/USDT</option>
-      <option value="VET/USDT">VET/USDT</option>
-      <option value="TUSD/USDT">TUSD/USDT</option>
-      <option value="RNDR/USDT">RNDR/USDT</option>
-      <option value="INJ/USDT">INJ/USDT</option>
-      <option value="MKR/USDT">MKR/USDT</option>
-      <option value="RUNE/USDT">RUNE/USDT</option>
-      <option value="AAVE/USDT">AAVE/USDT</option>
-      <option value="SAND/USDT">SAND/USDT</option>
-      <option value="EGLD/USDT">EGLD/USDT</option>
-      <option value="QNT/USDT">QNT/USDT</option>
-      <option value="FLOW/USDT">FLOW/USDT</option>
-      <option value="GRT/USDT">GRT/USDT</option>
-      <option value="AXS/USDT">AXS/USDT</option>
-      <option value="CHZ/USDT">CHZ/USDT</option>
-      <option value="XEC/USDT">XEC/USDT</option>
-      <option value="THETA/USDT">THETA/USDT</option>
-      <option value="EOS/USDT">EOS/USDT</option>
-      <option value="KAVA/USDT">KAVA/USDT</option>
-      <option value="PAXG/USDT">PAXG/USDT</option>
-      <option value="KCS/USDT">KCS/USDT</option>
-      <option value="ZEC/USDT">ZEC/USDT</option>
-    </select>
-  </div>
+			<div class="mb-6">
+				<label class="block mb-2 text-sm font-medium text-gray-300"
+					>Select Expiry Time</label
+				>
+				<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+					<label
+						class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700"
+					>
+						<input
+							type="radio"
+							name="expiry_time"
+							id="expiry_time"
+							value="120"
+							class="mr-2"
+						/>120s <small class="text-xs text-gray-400"> (30% Yield)</small>
+					</label>
+					<label
+						class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700"
+					>
+						<input
+							type="radio"
+							name="expiry_time"
+							value="180"
+							id="expiry_time"
+							class="mr-2"
+						/>180s <small class="text-xs text-gray-400"> (40% Yield)</small>
+					</label>
+					<label
+						class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700"
+					>
+						<input
+							type="radio"
+							name="expiry_time"
+							value="300"
+							id="expiry_time"
+							class="mr-2"
+						/>300s <small class="text-xs text-gray-400"> (50% Yield)</small>
+					</label>
+					<label
+						class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700"
+					>
+						<input
+							type="radio"
+							name="expiry_time"
+							value="360"
+							id="expiry_time"
+							class="mr-2"
+						/>360s <small class="text-xs text-gray-400"> (60% Yield)</small>
+					</label>
+				</div>
+			</div>
 
+			<div class="mb-6">
+				<label class="block mb-2 text-sm font-medium text-gray-300"
+					>Investment Amount (USDT)</label
+				>
+				<div class="flex flex-wrap gap-3 mb-3">
+					<button
+						type="button"
+						class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700"
+						data-amount="50"
+					>
+						50
+					</button>
+					<button
+						type="button"
+						class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700"
+						data-amount="100"
+					>
+						100
+					</button>
+					<button
+						type="button"
+						class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700"
+						data-amount="500"
+					>
+						500
+					</button>
+					<button
+						type="button"
+						class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700"
+						data-amount="1000"
+					>
+						1000
+					</button>
+				</div>
+				<input
+					type="number"
+					id="custom_amount"
+					name="custom_amount"
+					placeholder="Or enter a custom amount"
+					class="w-full p-3 rounded-lg bg-gray-800 border border-gray-600 text-white"
+				/>
+			</div>
 
+			<div class="mb-6">
+				<label class="block mb-2 text-sm font-medium text-gray-300"
+					>Trade Direction</label
+				>
+				<div class="flex gap-4">
+					<label
+						class="flex-1 text-center p-3 rounded-lg cursor-pointer bg-green-600 hover:bg-green-500"
+					>
+						<input type="radio" name="direction" value="up" class="mr-2" />Buy
+						Up
+					</label>
+					<label
+						class="flex-1 text-center p-3 rounded-lg cursor-pointer bg-red-600 hover:bg-red-500"
+					>
+						<input type="radio" name="direction" value="down" class="mr-2" />Buy
+						Down
+					</label>
+				</div>
+			</div>
 
-  <div class="mb-6">
-    <label class="block mb-2 text-sm font-medium text-gray-300">Select Expiry Time</label>
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <label class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-        <input type="radio" name="expiry_time" value="120" class="mr-2">120s <small class="text-xs text-gray-400"> (30% Yield)</small>
-      </label>
-      <label class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-        <input type="radio" name="expiry_time" value="180" class="mr-2">180s <small class="text-xs text-gray-400"> (40% Yield)</small>
-      </label>
-      <label class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-        <input type="radio" name="expiry_time" value="300" class="mr-2">300s <small class="text-xs text-gray-400"> (50% Yield)</small>
-      </label>
-      <label class="p-3 bg-gray-800 rounded-lg cursor-pointer hover:bg-gray-700">
-        <input type="radio" name="expiry_time" value="360" class="mr-2">360s <small class="text-xs text-gray-400"> (60% Yield)</small>
-      </label>
-    </div>
-  </div>
+			<button
+				type="submit"
+				class="w-full mt-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-lg"
+			>
+				✅ Confirm Trade
+			</button>
+		</form>
 
-  <div class="mb-6">
-    <label class="block mb-2 text-sm font-medium text-gray-300">Investment Amount (USDT)</label>
-    <div class="flex flex-wrap gap-3 mb-3">
-      <button type="button" class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700" data-amount="50">50</button>
-      <button type="button" class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700" data-amount="100">100</button>
-      <button type="button" class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700" data-amount="500">500</button>
-      <button type="button" class="amount-btn px-4 py-2 bg-gray-800 rounded-lg hover:bg-gray-700" data-amount="1000">1000</button>
-    </div>
-    <input type="number" id="custom_amount" name="custom_amount" placeholder="Or enter a custom amount" class="w-full p-3 rounded-lg bg-gray-800 border border-gray-600 text-white">
-  </div>
+		<div
+			id="tradeCountdownModal"
+			class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 hidden"
+		>
+			<div class="bg-gray-900 rounded-xl p-8 text-center w-80 relative">
+				<h2 class="text-xl font-semibold mb-4">⏳ Trade Countdown</h2>
+				<div class="relative w-40 h-40 mx-auto mb-4">
+					<svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+						<circle
+							cx="50"
+							cy="50"
+							r="45"
+							stroke="#4B5563"
+							stroke-width="10"
+							fill="none"
+						/>
+						<circle
+							id="countdownCircle"
+							cx="50"
+							cy="50"
+							r="45"
+							stroke="#3B82F6"
+							stroke-width="10"
+							fill="none"
+							stroke-linecap="round"
+							stroke-dasharray="283"
+							stroke-dashoffset="0"
+						/>
+					</svg>
+					<div
+						class="absolute inset-0 flex items-center justify-center text-3xl font-bold text-white"
+						id="countdownText"
+					>
+						--
+					</div>
+				</div>
+				<p class="text-gray-400">Your trade is active...</p>
+			</div>
+		</div>
+		<!-- Modal -->
+		<div
+			id="popup-modal"
+			class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden"
+		>
+			<div
+				class="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full text-center"
+			>
+				<p id="popup-message" class="text-gray-800 font-medium text-base"></p>
+				<button
+					id="close-popup"
+					class="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+				>
+					OK
+				</button>
+			</div>
+		</div>
 
-  <div class="mb-6">
-    <label class="block mb-2 text-sm font-medium text-gray-300">Trade Direction</label>
-    <div class="flex gap-4">
-      <label class="flex-1 text-center p-3 rounded-lg cursor-pointer bg-green-600 hover:bg-green-500">
-        <input type="radio" name="direction" value="up" class="mr-2">Buy Up
-      </label>
-      <label class="flex-1 text-center p-3 rounded-lg cursor-pointer bg-red-600 hover:bg-red-500">
-        <input type="radio" name="direction" value="down" class="mr-2">Buy Down
-      </label>
-    </div>
-  </div>
+		<br /><br /><br />
 
-  <button type="submit" class="w-full mt-4 py-3 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-lg">
-    ✅ Confirm Trade
-  </button>
-</form>
+		<script>
+			document.addEventListener("DOMContentLoaded", () => {
+				// Amount button click handling
+				document.querySelectorAll(".amount-btn").forEach((btn) => {
+					btn.addEventListener("click", () => {
+						document.getElementById("custom_amount").value = btn.dataset.amount;
+					});
+				});
 
-<div id="tradeCountdownModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50 hidden">
-  <div class="bg-gray-900 rounded-xl p-8 text-center w-80 relative">
-    <h2 class="text-xl font-semibold mb-4">⏳ Trade Countdown</h2>
-    <div class="relative w-40 h-40 mx-auto mb-4">
-      <svg class="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-        <circle cx="50" cy="50" r="45" stroke="#4B5563" stroke-width="10" fill="none" />
-        <circle id="countdownCircle" cx="50" cy="50" r="45" stroke="#3B82F6" stroke-width="10" fill="none" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="0" />
-      </svg>
-      <div class="absolute inset-0 flex items-center justify-center text-3xl font-bold text-white" id="countdownText">--</div>
-    </div>
-    <p class="text-gray-400">Your trade is active...</p>
-  </div>
-</div>
+				// Popup logic
+				const showPopup = (message, isSuccess = true) => {
+					const modal = document.getElementById("popup-modal");
+					const msgBox = document.getElementById("popup-message");
 
-<br><br><br>
+					msgBox.textContent = message;
+					msgBox.className = isSuccess
+						? "text-green-600 font-semibold text-base"
+						: "text-red-600 font-semibold text-base";
 
-<script>
-  document.querySelectorAll('.amount-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.getElementById('custom_amount').value = btn.dataset.amount;
-    });
-  });
+					modal.classList.remove("hidden");
+				};
 
-  const modal = document.getElementById("tradeCountdownModal");
-  const countdownCircle = document.getElementById("countdownCircle");
-  const countdownText = document.getElementById("countdownText");
+				document.getElementById("close-popup").addEventListener("click", () => {
+					document.getElementById("popup-modal").classList.add("hidden");
+				});
 
-  function startTradeCountdown(durationInSeconds, formData) {
-    modal.classList.remove("hidden");
-    let timeLeft = durationInSeconds;
-    const fullDash = 283;
+				// Trade countdown logic
+				const modal = document.getElementById("tradeCountdownModal");
+				const countdownCircle = document.getElementById("countdownCircle");
+				const countdownText = document.getElementById("countdownText");
 
-    const interval = setInterval(() => {
-      countdownText.textContent = timeLeft;
-      const progress = timeLeft / durationInSeconds;
-      countdownCircle.setAttribute("stroke-dashoffset", fullDash * (1 - progress));
+				function startTradeCountdown(durationInSeconds, onFinish) {
+					modal.classList.remove("hidden");
+					let timeLeft = durationInSeconds;
+					const fullDash = 283;
 
-      if (timeLeft <= 0) {
-        clearInterval(interval);
-        countdownText.textContent = "Done!";
-        fetch("{% url 'place_trade' %}", {
-          method: "POST",
-          headers: {
-            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
-          },
-          body: formData
-        }).then(res => res.json()).then(response => {
-          alert("Trade saved!");
-        });
-        setTimeout(() => modal.classList.add("hidden"), 2000);
-      }
-      timeLeft--;
-    }, 1000);
-  }
+					const interval = setInterval(() => {
+						countdownText.textContent = timeLeft;
+						const progress = timeLeft / durationInSeconds;
+						countdownCircle.setAttribute(
+							"stroke-dashoffset",
+							fullDash * (1 - progress)
+						);
 
-  document.getElementById("tradeForm").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const expiry = document.querySelector('input[name="expiry_time"]:checked');
-    if (!expiry) {
-      alert("Select expiry time");
-      return;
-    }
-    const formData = new FormData(this);
-    startTradeCountdown(parseInt(expiry.value), formData);
-  });
-</script>
+						if (timeLeft <= 0) {
+							clearInterval(interval);
+							countdownText.textContent = "Done!";
+							setTimeout(() => {
+								modal.classList.add("hidden");
+								if (typeof onFinish === "function") {
+									onFinish();
+								}
+							}, 1000);
+						}
 
-</body>
+						timeLeft--;
+					}, 1000);
+				}
+
+				// Trade form submission
+				const form = document.querySelector("#tradeForm");
+				if (form) {
+					form.addEventListener("submit", async function (e) {
+						e.preventDefault();
+
+						const formData = new FormData(this);
+
+						const response = await fetch("/contract/", {
+							method: "POST",
+							body: formData,
+						});
+
+						const data = await response.json();
+
+						if (data.success) {
+							const expiry = parseInt(formData.get("expiry_time"));
+
+							startTradeCountdown(expiry, () => {
+								showPopup(
+									`✅ Trade placed! Profit: ${data.profit_added}`,
+									true
+								);
+							});
+						} else {
+							showPopup(`❌ ${data.error || "Something went wrong"}`, false);
+						}
+					});
+				}
+			});
+		</script>
+	</body>
 </html>
 {% endblock %}
