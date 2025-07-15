@@ -51,7 +51,7 @@
 	</head>
 	<body class="min-h-screen">
 		<!-- Profile Icon -->
-		<a href="{% url 'profile' %}" class="absolute left-5 top-5 text-4xl z-50">
+		<a href="{% url 'profile' %}" class="absolute left-5 top-5 text-2xl md:text-4xl z-50">
 			🧑
 		</a>
 		<br />
@@ -108,39 +108,39 @@
 		</div>
 
 		<!-- Navigation Cards -->
-		<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-4 mb-12">
+		<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-2 mb-12">
 			<a
 				href="{% url 'deposit_list' %}"
 				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
 			>
-				<span class="text-4xl">💰</span>
+				<span class="text-2xl md:text-4xl">💰</span>
 				<span class="text-sm font-semibold mt-2">{% trans "Deposit" %}</span>
 			</a>
 			<a
 				href="{% url 'withdrawal_success' %}"
 				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
 			>
-				<span class="text-4xl">💸</span>
+				<span class="text-2xl md:text-4xl">💸</span>
 				<span class="text-sm font-semibold mt-2">{% trans "Withdraw" %}</span>
 			</a>
 			<a
 				href="{% url 'subscription_list' %}"
 				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center text-center card-hover"
 			>
-				<span class="text-4xl">🚀</span>
+				<span class="text-2xl md:text-4xl">🚀</span>
 				<span class="text-sm font-semibold mt-2">IEO</span>
 			</a>
 			<a
 				href="{% url 'staking' %}"
 				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
 			>
-				<span class="text-4xl">🔒🪙</span>
+				<span class="text-2xl md:text-4xl">🔒🪙</span>
 				<span class="text-sm font-semibold mt-2">Staking</span>
 			</a>
 		</div>
 
 		<!-- Live Market Section -->
-		<div class="bg-gray-800 rounded-2xl mx-4 px-4 py-6 shadow-md mb-20">
+		<div class="bg-gray-800 rounded-2xl mx-2 px-4 py-6 shadow-md mb-20">
 			<!-- Header -->
 			<div
 				class="grid grid-cols-3 gap-4 text-gray-300 text-sm font-semibold border-b border-gray-700 pb-2 mb-2"
