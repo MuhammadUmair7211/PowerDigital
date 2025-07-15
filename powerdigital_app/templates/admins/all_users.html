@@ -6,6 +6,7 @@
   <meta charset="UTF-8">
   <title>All Registered Users</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body {
       background-color: #0f172a;
@@ -16,7 +17,7 @@
     }
 
     .container {
-      max-width: 1000px;
+      max-width: 1200px;
       margin: auto;
       background-color: #1e293b;
       padding: 30px 20px;
@@ -33,28 +34,28 @@
 
     .search-form {
       text-align: center;
-      margin-bottom: 20px;
       display: flex;
       flex-wrap: wrap;
+      max-width: 600px;
+      margin: 20px auto;
       justify-content: center;
-      gap: 10px;
     }
 
     .search-input {
-      padding: 10px;
-      border-radius: 8px;
+      padding: 14px 10px;
+      border-radius: 5px;
       border: 1px solid #374151;
       background-color: #0f172a;
       color: #f8fafc;
-      width: 240px;
+      flex: 1;
     }
 
     .search-button {
       background-color: #143b8f;
       border: none;
       color: white;
-      padding: 10px 18px;
-      border-radius: 8px;
+      padding: 15px 20px;
+      border-radius: 5px;
       cursor: pointer;
     }
 
@@ -166,7 +167,9 @@
 <body>
   <br>
   <div class="container">
-    <h2>👥 All Registered Users</h2>
+    <h2>
+      <span class="text-4xl">👥</span>
+      All Registered Users</h2>
 
     <!-- Search -->
     <form method="get" class="search-form">

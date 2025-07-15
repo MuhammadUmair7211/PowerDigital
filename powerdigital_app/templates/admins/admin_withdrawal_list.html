@@ -63,15 +63,18 @@
 
         .search-form {
             display: flex;
+            align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-bottom: 24px;
+            justify-content: space-between;
+            gap: 10px;
+            max-width: 500px;
+            margin: 20px auto;
         }
 
         .form-control {
             background-color: #0f172a;
             color: #e2e8f0;
+            flex: 1;
             border: 1px solid #334155;
         }
 
@@ -149,7 +152,7 @@
 
         <!-- Search -->
         <form method="get" class="search-form">
-            <input type="text" name="search" class="form-control" placeholder="Search by username" value="{{ request.GET.search }}" style="max-width: 300px;">
+            <input type="text" name="search" class="form-control" placeholder="Search by username" value="{{ request.GET.search }}">
             <button type="submit" class="btn btn-primary px-4">Search</button>
         </form>
 

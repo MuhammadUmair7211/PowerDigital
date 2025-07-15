@@ -134,16 +134,15 @@ def place_trade(request):
         expiry_time = int(request.POST.get('expiry_time'))
 
         profit_percent = get_profit_percentage(expiry_time)
-        profit = amount * profit_percent
+        potential_profit = amount * profit_percent
 
         profile = Profile.objects.select_for_update().get(user=request.user)
         total_balance = profile.total_balance
 
-        # Check if user has enough balance
         if total_balance < amount:
             return JsonResponse({'success': False, 'error': 'Insufficient balance'})
 
-        # Deduct amount from total_deposit first, then from total_profit if needed
+        # Deduct amount upfront
         remaining_amount = amount
         if profile.total_deposit >= remaining_amount:
             profile.total_deposit -= remaining_amount
@@ -152,21 +151,21 @@ def place_trade(request):
             profile.total_deposit = 0
             profile.total_profit -= remaining_amount
 
-        # Add profit
-        profile.total_profit += profit
         profile.save()
 
-        # Save trade order
+        # Save trade order with potential profit
         TradeOrder.objects.create(
             user=request.user,
             pair=pair,
             direction="Buy Up" if direction == "up" else "Buy Down",
             amount=amount,
             expiry_time=expiry_time,
-            balance=total_balance
+            balance=total_balance,
+            potential_profit=potential_profit,
+            is_closed=False
         )
 
-        return JsonResponse({'success': True, 'profit_added': str(profit)})
+        return JsonResponse({'success': True})
 
     return render(request, "main/contract.html")
 
@@ -472,16 +471,17 @@ def mark_trade_result(request, trade_id, outcome):
         messages.error(request, "Invalid result.")
         return redirect('admin_trades')
 
-    # Set result and handle deposit
     trade.result = outcome
     trade.result_handled = True
+    trade.is_closed = True
     trade.save()
 
     profile, _ = Profile.objects.get_or_create(user=trade.user)
+
     if outcome == 'win':
-        profile.total_deposit += trade.amount
-    else:  # loss
-        profile.total_deposit -= trade.amount
+        profile.total_profit += trade.potential_profit  # ✅ CORRECT
+    # If loss, do nothing (amount already deducted at order placement)
+
     profile.save()
 
     messages.success(request, f"Marked trade as {outcome} and updated balance.")

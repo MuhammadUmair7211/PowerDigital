@@ -1,159 +1,208 @@
-
-{% extends 'main/base.html' %}
-{% block content %}
-
-{% load i18n %}
+{% extends 'main/base.html' %} {% block content %} {% load i18n %} 
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crypto Exchange</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #0f172a;
-      color: #ffffff;
-    }
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Crypto Exchange</title>
+		<link
+			rel="icon"
+			type="image/svg+xml"
+			href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 151 174" fill="%23d32f2f"><path d="M74.5 4.5h27.1l-17.4 55.8h22.6L74.8 148.6l4.7-44.5H57.6l17.1-44.5H57.4L74.5 4.5z"/><path d="M75.5 0C34.1 0 0 34.1 0 75.5S34.1 151 75.5 151c41.3 0 75.5-34.1 75.5-75.5 0-21.7-9-41.3-23.5-55.1l-7.5 23.1c9.8 9.9 15.8 23.6 15.8 38.6 0 30.3-24.6 54.9-54.9 54.9S26.1 112.9 26.1 82.6 50.7 27.7 81 27.7l4.5-13.8C82.7 11.1 79.2 10.3 75.5 10.3z"/></svg>'
+		/>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<link
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			body {
+				font-family: "Inter", sans-serif;
+				background: #0f172a;
+				color: #ffffff;
+			}
 
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
+			.no-scrollbar::-webkit-scrollbar {
+				display: none;
+			}
+			.no-scrollbar {
+				-ms-overflow-style: none;
+				scrollbar-width: none;
+			}
 
-    .card-hover {
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .card-hover:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
-    }
+			.card-hover {
+				transition: transform 0.3s ease, box-shadow 0.3s ease;
+			}
+			.card-hover:hover {
+				transform: translateY(-4px);
+				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+			}
+			i {
+				font-size: 24px;
+				color: #65e3e3;
+				margin-left: 10px;
+				margin-top: 10px;
+			}
+			.market-row {
+				transition: background-color 0.2s ease;
+			}
+		</style>
+	</head>
+	<body class="min-h-screen">
+		<!-- Profile Icon -->
+		<a href="{% url 'profile' %}" class="fixed left-5 top-5 text-4xl z-50">
+			🧑
+		</a>
+		<br />
+		<div class="d-flex align-items-center justify-content-center gap-3 mb-8">
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 151 174"
+				width="50"
+				height="50"
+				fill="#d32f2f"
+			>
+				<path
+					d="M74.5 4.5h27.1l-17.4 55.8h22.6L74.8 148.6l4.7-44.5H57.6l17.1-44.5H57.4L74.5 4.5z"
+				/>
+				<path
+					d="M75.5 0C34.1 0 0 34.1 0 75.5S34.1 151 75.5 151c41.3 0 75.5-34.1 75.5-75.5 0-21.7-9-41.3-23.5-55.1l-7.5 23.1c9.8 9.9 15.8 23.6 15.8 38.6 0 30.3-24.6 54.9-54.9 54.9S26.1 112.9 26.1 82.6 50.7 27.7 81 27.7l4.5-13.8C82.7 11.1 79.2 10.3 75.5 10.3z"
+				/>
+			</svg>
+			<h4 class="m-0" style="font-size: 2rem; color: #65e4e4">Power Digital</h4>
+		</div>
 
-    .market-row {
-      transition: background-color 0.2s ease;
-    }
-  </style>
-</head>
-<body class="min-h-screen">
+		<!-- Banner Slider -->
+		<div class="px-4 mt-8 mb-6">
+			<div
+				id="bannerSlider"
+				class="flex snap-x snap-mandatory overflow-x-auto rounded-2xl shadow-lg no-scrollbar scroll-smooth"
+			>
+				{% if banner_set.banner1 %}
+				<div class="flex-shrink-0 w-full snap-center">
+					<img
+						src="{{ banner_set.banner1.url }}"
+						class="w-full h-56 sm:h-64 object-cover rounded-2xl"
+						alt="Banner 1"
+					/>
+				</div>
+				{% endif %} {% if banner_set.banner2 %}
+				<div class="flex-shrink-0 w-full snap-center">
+					<img
+						src="{{ banner_set.banner2.url }}"
+						class="w-full h-56 sm:h-64 object-cover rounded-2xl"
+						alt="Banner 2"
+					/>
+				</div>
+				{% endif %} {% if banner_set.banner3 %}
+				<div class="flex-shrink-0 w-full snap-center">
+					<img
+						src="{{ banner_set.banner3.url }}"
+						class="w-full h-56 sm:h-64 object-cover rounded-2xl"
+						alt="Banner 3"
+					/>
+				</div>
+				{% endif %}
+			</div>
+		</div>
 
+		<!-- Navigation Cards -->
+		<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-4 mb-12">
+			<a
+				href="{% url 'deposit_list' %}"
+				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
+			>
+				<span class="text-4xl">💰</span>
+				<span class="text-sm font-semibold mt-2">{% trans "Deposit" %}</span>
+			</a>
+			<a
+				href="{% url 'withdrawal_success' %}"
+				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
+			>
+				<span class="text-4xl">💸</span>
+				<span class="text-sm font-semibold mt-2">{% trans "Withdraw" %}</span>
+			</a>
+			<a
+				href="{% url 'subscription_list' %}"
+				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center text-center card-hover"
+			>
+				<span class="text-4xl">🚀</span>
+				<span class="text-sm font-semibold mt-2">IEO</span>
+			</a>
+			<a
+				href="{% url 'staking' %}"
+				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
+			>
+				<span class="text-4xl">🔒🪙</span>
+				<span class="text-sm font-semibold mt-2">Staking</span>
+			</a>
+		</div>
 
+		<!-- Live Market Section -->
+		<div class="bg-gray-800 rounded-2xl mx-4 px-4 py-6 shadow-md mb-20">
+			<!-- Header -->
+			<div
+				class="grid grid-cols-3 gap-4 text-gray-300 text-sm font-semibold border-b border-gray-700 pb-2 mb-2"
+			>
+				<p class="text-left">{% trans "Trading Pair" %}</p>
+				<p class="text-center">{% trans "Latest Price" %}</p>
+				<p class="text-right">{% trans "Ups and Downs" %}</p>
+			</div>
 
-<!-- Profile Icon -->
-<a href="{% url 'profile' %}" class="fixed left-4 top-4 z-50">
-  <img src="{% static 'image/user_icon.png' %}" alt="Profile"
-       style="height: 2rem; filter: invert(1) sepia(1) saturate(5000%) hue-rotate(120deg);">
-</a>
-  <br>
-    <div class="d-flex align-items-center justify-content-center gap-3 mb-8">
-                    
-        <img src="{% static 'image/logos.png' %}" alt="Logo" style="height: 3rem;">
-        <h4 class="m-0" style="font-size: 2rem;color: #65e4e4;">Power Digital</h4>
-    </div>
+			<!-- Market List -->
+			<ul
+				id="market-list"
+				class="divide-y divide-gray-700 text-sm text-gray-200 font-medium"
+			></ul>
+		</div>
 
-<!-- Banner Slider -->
-<div class="px-4 mt-8 mb-6">
-  <div id="bannerSlider" class="flex snap-x snap-mandatory overflow-x-auto rounded-2xl shadow-lg no-scrollbar scroll-smooth">
-    {% if banner_set.banner1 %}
-      <div class="flex-shrink-0 w-full snap-center">
-        <img src="{{ banner_set.banner1.url }}" class="w-full h-56 sm:h-64 object-cover rounded-2xl" alt="Banner 1">
-      </div>
-    {% endif %}
-    {% if banner_set.banner2 %}
-      <div class="flex-shrink-0 w-full snap-center">
-        <img src="{{ banner_set.banner2.url }}" class="w-full h-56 sm:h-64 object-cover rounded-2xl" alt="Banner 2">
-      </div>
-    {% endif %}
-    {% if banner_set.banner3 %}
-      <div class="flex-shrink-0 w-full snap-center">
-        <img src="{{ banner_set.banner3.url }}" class="w-full h-56 sm:h-64 object-cover rounded-2xl" alt="Banner 3">
-      </div>
-    {% endif %}
-  </div>
-</div>
-
-<!-- Navigation Cards -->
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-4 px-4 mb-12">
-  <a href="{% url 'deposit_list' %}" class="bg-gray-800 rounded-xl p-4 text-center card-hover">
-    <img src="{% static 'image/icon-1.png' %}" class="mx-auto mb-2 w-8 h-8" alt="Deposit">
-    <span class="text-sm font-semibold">{% trans "Deposit" %}</span>
-  </a>
-  <a href="{% url 'withdrawal_success' %}" class="bg-gray-800 rounded-xl p-4 text-center card-hover">
-    <img src="{% static 'image/icon-2.png' %}" class="mx-auto mb-2 w-8 h-8" alt="Withdraw">
-    <span class="text-sm font-semibold">{% trans "Withdraw" %}</span>
-  </a>
-  <a href="{% url 'subscription_list' %}" class="bg-gray-800 rounded-xl p-4 text-center card-hover">
-    <img src="{% static 'image/icon-3.png' %}" class="mx-auto mb-2 w-8 h-8" alt="IEO">
-    <span class="text-sm font-semibold">IEO</span>
-  </a>
-  <a href="{% url 'staking' %}" class="bg-gray-800 rounded-xl p-4 text-center card-hover">
-    <img src="{% static 'image/icon-4.png' %}" class="mx-auto mb-2 w-8 h-8" alt="Staking">
-    <span class="text-sm font-semibold">Staking</span>
-  </a>
-</div>
-
-<!-- Live Market Section -->
-<div class="bg-gray-800 rounded-2xl mx-4 px-4 py-6 shadow-md mb-20">
-  <!-- Header -->
-  <div class="grid grid-cols-3 gap-4 text-gray-300 text-sm font-semibold border-b border-gray-700 pb-2 mb-2">
-    <p class="text-left">{% trans "Trading Pair" %}</p>
-    <p class="text-center">{% trans "Latest Price" %}</p>
-    <p class="text-right">{% trans "Ups and Downs" %}</p>
-  </div>
-
-  <!-- Market List -->
-  <ul id="market-list" class="divide-y divide-gray-700 text-sm text-gray-200 font-medium"></ul>
-</div>
-
-<script>
-  fetch("https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1")
-  .then(res => res.json())
-  .then(data => {
-    const list = document.getElementById("market-list");
-    data.forEach(coin => {
-      const changeClass = coin.price_change_percentage_24h >= 0 ? 'text-green-400' : 'text-red-400';
-      const changeSymbol = coin.price_change_percentage_24h >= 0 ? '+' : '';
-      list.innerHTML += `
+		<script>
+			fetch(
+				"https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=10&page=1"
+			)
+				.then((res) => res.json())
+				.then((data) => {
+					const list = document.getElementById("market-list");
+					data.forEach((coin) => {
+						const changeClass =
+							coin.price_change_percentage_24h >= 0
+								? "text-green-400"
+								: "text-red-400";
+						const changeSymbol =
+							coin.price_change_percentage_24h >= 0 ? "+" : "";
+						list.innerHTML += `
         <li class="grid grid-cols-3 gap-4 py-3 items-center">
           <div class="flex items-center gap-2">
-            <img src="${coin.image}" class="w-6 h-6 rounded-full" alt="${coin.symbol}">
+            <img src="${coin.image}" class="w-6 h-6 rounded-full" alt="${
+							coin.symbol
+						}">
             <span>${coin.symbol.toUpperCase()}/USD</span>
           </div>
-          <div class="text-center">$${coin.current_price.toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
-          <div class="text-right ${changeClass}">${changeSymbol}${coin.price_change_percentage_24h.toFixed(2)}%</div>
+          <div class="text-center">$${coin.current_price.toLocaleString(
+						undefined,
+						{ minimumFractionDigits: 2 }
+					)}</div>
+          <div class="text-right ${changeClass}">${changeSymbol}${coin.price_change_percentage_24h.toFixed(
+							2
+						)}%</div>
         </li>`;
-    });
-  })
-  .catch(error => console.error('Error fetching market data:', error));
-</script>
-<script>
-  const slider = document.getElementById('bannerSlider');
-  const slides = slider.children;
-  let index = 0;
-  setInterval(() => {
-    index = (index + 1) % slides.length;
-    slider.scrollTo({
-      left: slides[index].offsetLeft,
-      behavior: 'smooth'
-    });
-  }, 5000);
-</script>
-
-</body>
+					});
+				})
+				.catch((error) => console.error("Error fetching market data:", error));
+		</script>
+		<script>
+			const slider = document.getElementById("bannerSlider");
+			const slides = slider.children;
+			let index = 0;
+			setInterval(() => {
+				index = (index + 1) % slides.length;
+				slider.scrollTo({
+					left: slides[index].offsetLeft,
+					behavior: "smooth",
+				});
+			}, 5000);
+		</script>
+	</body>
 </html>
 {% endblock %}
-
-
-
-
-
-
-
-
-
-

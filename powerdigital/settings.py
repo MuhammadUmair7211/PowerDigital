@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-*8$vz^uy)wgg_ql7bqxx1!qcy5atot*5tuy8i$742v)yf)i7jg
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['www.power-digital.tech', 'power-digital.tech', '209.74.87.238']
+ALLOWED_HOSTS = ['www.power-digital.tech', 'power-digital.tech', '209.74.87.238', '127.0.0.1', 'localhost']
 
 
 
@@ -139,13 +139,8 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR,'staticfiles')
-
-
-
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'powerdigital_app/static'),  # development static
-]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
