@@ -183,34 +183,43 @@ def submit_order(request):
             return redirect('order_success') 
     return redirect('home')
 
-
-
-
-
-
 def user_trades(request):  
     trades = TradeOrder.objects.filter(user=request.user).order_by('-created_at')
     profile, _ = Profile.objects.get_or_create(user=request.user)
+
     approved_total = Deposit.objects.filter(
         user=request.user, is_approved=True
     ).aggregate(total=Sum('amount'))['total'] or 0
 
-
     profile.total_deposit = approved_total
     profile.save()
 
-    total_balance = profile.total_deposit + profile.total_profit
-
     total_profit = profile.total_profit
+    total_credit = profile.credit  # ✅ Add this line
 
-     # Pagination setup (10 trades per page)
+    total_balance = profile.total_deposit + total_profit + total_credit  # ✅ Include credit in balance
+
+    # Pagination setup (10 trades per page)
     paginator = Paginator(trades, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    return render(request, "main/assets.html", {"user_trades": trades , 'total_deposit': approved_total ,
-                                                 'total_balance': total_balance , 'total_profit' : total_profit , 
-                                                 'page_obj': page_obj})
+    return render(request, "main/assets.html", {
+        "user_trades": trades,
+        "total_deposit": approved_total,
+        "total_profit": total_profit,
+        "total_balance": total_balance,
+        "credit": total_credit,  # ✅ Add to context
+        "page_obj": page_obj
+    })
+
+
+
+
+
+
+
+
 
 
 
@@ -612,6 +621,8 @@ def admin_login_view(request):
 
 
 
+from django.contrib.auth import authenticate, login
+
 def admin_register_view(request):
     if request.method == "POST":
         form = AdminRegisterForm(request.POST)
@@ -620,11 +631,21 @@ def admin_register_view(request):
             user.set_password(form.cleaned_data['password'])
             user.is_staff = True  # Make the user an admin
             user.save()
+
             Profile.objects.get_or_create(user=user)  # Ensure profile is created
-            messages.success(request, "Admin account created successfully.")
-            return redirect('admin_login')  # Replace with your actual login view
+
+            # ✅ Authenticate and log in the user
+            new_user = authenticate(request, username=user.username, password=form.cleaned_data['password'])
+            if new_user:
+                login(request, new_user)
+                messages.success(request, "Admin account created and logged in successfully.")
+                return redirect('admin_dashboard')  # or wherever admins go
+
+            messages.success(request, "Admin account created. Please log in.")
+            return redirect('admin_login')  # fallback
     else:
         form = AdminRegisterForm()
+
     return render(request, 'admins/admin_register.html', {'form': form})
 
 

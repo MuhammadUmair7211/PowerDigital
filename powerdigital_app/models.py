@@ -27,30 +27,26 @@ class TradeOrder(models.Model):
   
 
 
-
-
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     credit_score = models.IntegerField(default=100)
     withdrawal_password = models.CharField(max_length=128)
     total_deposit = models.DecimalField(default=0, max_digits=12, decimal_places=2)
     total_profit = models.DecimalField(default=0, max_digits=12, decimal_places=2)
+    credit = models.DecimalField(default=0, max_digits=12, decimal_places=2)  # ✅ Add this line
 
     invite_code = models.CharField(max_length=12, unique=True, blank=True, null=True)
     is_approved = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if not self.invite_code:
-            self.invite_code = str(uuid.uuid4()).split('-')[0]  # Simple short code
+            self.invite_code = str(uuid.uuid4()).split('-')[0]
         super().save(*args, **kwargs)
-
 
     @property
     def total_balance(self):
-        return self.total_deposit + self.total_profit
+        return self.total_deposit + self.total_profit + self.credit  # ✅ Include credit in balance
 
-
-    
     def set_withdrawal_password(self, raw_password):
         self.withdrawal_password = make_password(raw_password)
 
@@ -59,6 +55,11 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+
+
+
     
 
 

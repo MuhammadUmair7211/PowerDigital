@@ -1,229 +1,261 @@
-{% extends 'main/base.html' %}
-{% block content %}
+{% extends 'main/base.html' %} {% block content %}
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Your Trades</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      background-color: #0f172a;
-      color: #e2e8f0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 20px;
-    }
+	<head>
+		<meta charset="UTF-8" />
+		<title>Your Trades</title>
+		<script src="https://cdn.tailwindcss.com"></script>
+		<style>
+			body {
+				background-color: #0f172a;
+				color: #e2e8f0;
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				margin: 0;
+				padding: 20px;
+			}
 
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      background: #1e293b;
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.6);
-    }
+			.container {
+				max-width: 1200px;
+				margin: auto;
+				background: #1e293b;
+				padding: 30px;
+				border-radius: 12px;
+				box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
+			}
 
-    .account-summary-card {
-      background: #2d3748;
-      color: #fff;
-      padding: 20px 25px;
-      border-radius: 16px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+			.account-summary-card {
+				background: #2d3748;
+				color: #fff;
+				padding: 20px 25px;
+				border-radius: 16px;
+				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+				transition: transform 0.2s ease, box-shadow 0.2s ease;
+			}
 
-    .account-summary-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-    }
+			.account-summary-card:hover {
+				transform: translateY(-4px);
+				box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+			}
 
-    .account-summary-card h3 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-      display: flex;
-      align-items: center;
-    }
+			.account-summary-card h3 {
+				font-size: 1.5rem;
+				font-weight: 600;
+				margin-bottom: 1rem;
+				display: flex;
+				align-items: center;
+			}
 
-    .account-summary-card h3 span {
-      margin-right: 10px;
-      font-size: 1.8rem;
-    }
+			.account-summary-card h3 span {
+				margin-right: 10px;
+				font-size: 1.8rem;
+			}
 
-    .account-summary-value {
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #4caf50;
-    }
+			.account-summary-value {
+				font-size: 1.3rem;
+				font-weight: bold;
+				color: #4caf50;
+			}
 
-    .account-summary-details {
-      margin-top: 10px;
-      font-size: 0.95rem;
-      color: #ccc;
-    }
+			.account-summary-details {
+				margin-top: 10px;
+				font-size: 0.95rem;
+				color: #ccc;
+			}
 
-    .account-summary-details span {
-      font-weight: 600;
-    }
+			.account-summary-details span {
+				font-weight: 600;
+			}
 
-    .account-summary-details .deposit {
-      color: #03a9f4;
-    }
+			@media (max-width: 576px) {
+				.container {
+					padding: 15px;
+				}
 
-    .account-summary-details .profit {
-      color: #ffc107;
-    }
+				.account-summary-card {
+					padding: 15px 20px;
+				}
 
-    @media (max-width: 576px) {
-      .container {
-        padding: 15px;
-      }
+				.account-summary-card h3 {
+					font-size: 1.3rem;
+				}
 
-      .account-summary-card {
-        padding: 15px 20px;
-      }
+				.account-summary-value {
+					font-size: 1.1rem;
+				}
 
-      .account-summary-card h3 {
-        font-size: 1.3rem;
-      }
+				table {
+					font-size: 12px;
+				}
 
-      .account-summary-value {
-        font-size: 1.1rem;
-      }
+				th,
+				td {
+					padding: 10px;
+				}
+			}
 
-      table {
-        font-size: 12px;
-      }
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				margin-top: 15px;
+			}
 
-      th, td {
-        padding: 10px;
-      }
-    }
+			thead {
+				background-color: #334155;
+				color: #cbd5e1;
+				text-transform: uppercase;
+				font-size: 13px;
+			}
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
+			th,
+			td {
+				padding: 12px 16px;
+				text-align: left;
+				border-bottom: 1px solid #475569;
+			}
 
-    thead {
-      background-color: #334155;
-      color: #cbd5e1;
-      text-transform: uppercase;
-      font-size: 13px;
-    }
+			tr:hover {
+				background-color: #2c3e50;
+			}
 
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid #475569;
-    }
+			.text-green {
+				color: #22c55e;
+				font-weight: bold;
+			}
 
-    tr:hover {
-      background-color: #2c3e50;
-    }
+			.text-red {
+				color: #ef4444;
+				font-weight: bold;
+			}
 
-    .text-green {
-      color: #22c55e;
-      font-weight: bold;
-    }
+			.no-trades {
+				text-align: center;
+				margin-top: 20px;
+				color: #94a3b8;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			{% if request.user.is_authenticated %}
+			<div class="account-summary-card mb-4">
+				<h3><span>💼</span>Account Summary</h3>
+				<p>
+					<strong>Total Balance:</strong>
+					<span class="account-summary-value">${{ total_balance }}</span>
+				</p>
+				<div class="account-summary-details text-sm md:text-base">
+					<p class="flex flex-wrap gap-2">
+						<span class="font-semibold text-gray-300">Deposit:</span>
+						<span class="deposit text-blue-400">${{ total_deposit }}</span>
 
-    .text-red {
-      color: #ef4444;
-      font-weight: bold;
-    }
+						<span class="text-gray-500">|</span>
 
-    .no-trades {
-      text-align: center;
-      margin-top: 20px;
-      color: #94a3b8;
-    }
-  </style>
-</head>
-<body>
+						<span class="font-semibold text-gray-300">Profit:</span>
+						<span class="profit text-yellow-400">${{ total_profit }}</span>
 
-  <div class="container">
-    {% if request.user.is_authenticated %}
-    <div class="account-summary-card mb-4">
-      <h3><span>💼</span>Account Summary</h3>
-      <p><strong>Total Balance:</strong>
-        <span class="account-summary-value">${{ total_balance }}</span>
-      </p>
-      <div class="account-summary-details">
-        <p>
-          Deposit: <span class="deposit">${{ total_deposit }}</span> &nbsp; | &nbsp;
-          Profit: <span class="profit">${{ total_profit }}</span>
-        </p>
-      </div>
-    </div>
-    {% endif %}
+						<span class="text-gray-500">|</span>
 
-    <h2 style="text-align: center; color: #f1f5f9;">📊 Your Trades</h2>
+						<span class="font-semibold text-gray-300">Credit:</span>
+						<span class="credit text-purple-400">${{ credit }}</span>
+					</p>
+				</div>
+			</div>
 
-    {% if page_obj %}
-      <table>
-        <thead>
-          <tr>
-            <th>Pair</th>
-            <th>Direction</th>
-            <th>Amount (USDT)</th>
-            <th>Expiry (s)</th>
-            <th>Profit/Loss</th>
-            <th>Created At</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for trade in page_obj %}
-          <tr>
-            <td>{{ trade.pair }}</td>
-            <td>
-              {% if trade.direction == 'Buy Up' %}
-                <span class="text-green">📈 Buy Up</span>
-              {% else %}
-                <span class="text-red">📉 Buy Down</span>
-              {% endif %}
-            </td>
-            <td>${{ trade.amount }}</td>
-            <td>{{ trade.expiry_time }} sec</td>
-            <td>{{ trade.single_trade }}</td>
-            <td>{{ trade.created_at|date:"Y-m-d H:i:s" }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      <br>
-      <!-- Pagination Controls -->
-     <!-- Pagination Controls -->
-      <div class="mt-8 flex justify-center items-center space-x-2">
-        {% if page_obj.has_previous %}
-          <a href="?page=1" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">« First</a>
-          <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">← Prev</a>
-        {% else %}
-          <span class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed">« First</span>
-          <span class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed">← Prev</span>
-        {% endif %}
+			{% endif %}
 
-        <span class="px-4 py-1 bg-blue-800 text-white rounded text-sm">
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
+			<h2 style="text-align: center; color: #f1f5f9">📊 Your Trades</h2>
 
-        {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Next →</a>
-          <a href="?page={{ page_obj.paginator.num_pages }}" class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600">Last »</a>
-        {% else %}
-          <span class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed">Next →</span>
-          <span class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed">Last »</span>
-        {% endif %}
-      </div>
-    {% else %}
-      <p class="no-trades">You have no trades yet.</p>
-    {% endif %}
-  </div>
+			{% if page_obj %}
+			<table>
+				<thead>
+					<tr>
+						<th>Pair</th>
+						<th>Direction</th>
+						<th>Amount (USDT)</th>
+						<th>Expiry (s)</th>
+						<th>Profit/Loss</th>
+						<th>Created At</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for trade in page_obj %}
+					<tr>
+						<td>{{ trade.pair }}</td>
+						<td>
+							{% if trade.direction == 'Buy Up' %}
+							<span class="text-green">📈 Buy Up</span>
+							{% else %}
+							<span class="text-red">📉 Buy Down</span>
+							{% endif %}
+						</td>
+						<td>${{ trade.amount }}</td>
+						<td>{{ trade.expiry_time }} sec</td>
+						<td>{{ trade.single_trade }}</td>
+						<td>{{ trade.created_at|date:"Y-m-d H:i:s" }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+			<br />
+			<!-- Pagination Controls -->
+			<!-- Pagination Controls -->
+			<div class="mt-8 flex justify-center items-center space-x-2">
+				{% if page_obj.has_previous %}
+				<a
+					href="?page=1"
+					class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+					>« First</a
+				>
+				<a
+					href="?page={{ page_obj.previous_page_number }}"
+					class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+					>← Prev</a
+				>
+				{% else %}
+				<span
+					class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed"
+					>« First</span
+				>
+				<span
+					class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed"
+					>← Prev</span
+				>
+				{% endif %}
 
-  <br><br><br>
-</body>
+				<span class="px-4 py-1 bg-blue-800 text-white rounded text-sm">
+					Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+				</span>
+
+				{% if page_obj.has_next %}
+				<a
+					href="?page={{ page_obj.next_page_number }}"
+					class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+					>Next →</a
+				>
+				<a
+					href="?page={{ page_obj.paginator.num_pages }}"
+					class="px-3 py-1 bg-gray-700 text-white rounded hover:bg-gray-600"
+					>Last »</a
+				>
+				{% else %}
+				<span
+					class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed"
+					>Next →</span
+				>
+				<span
+					class="px-3 py-1 bg-blue-800 text-gray-100 rounded cursor-not-allowed"
+					>Last »</span
+				>
+				{% endif %}
+			</div>
+			{% else %}
+			<p class="no-trades">You have no trades yet.</p>
+			{% endif %}
+		</div>
+
+		<br /><br /><br />
+	</body>
 </html>
 
 {% endblock %}
