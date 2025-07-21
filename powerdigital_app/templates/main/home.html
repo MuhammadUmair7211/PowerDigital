@@ -51,7 +51,10 @@
 	</head>
 	<body class="min-h-screen">
 		<!-- Profile Icon -->
-		<a href="{% url 'profile' %}" class="absolute left-5 top-5 text-2xl md:text-4xl z-50">
+		<a
+			href="{% url 'profile' %}"
+			class="absolute left-5 top-6 text-3xl md:text-4xl z-50"
+		>
 			🧑
 		</a>
 		<br />
@@ -70,7 +73,19 @@
 					d="M75.5 0C34.1 0 0 34.1 0 75.5S34.1 151 75.5 151c41.3 0 75.5-34.1 75.5-75.5 0-21.7-9-41.3-23.5-55.1l-7.5 23.1c9.8 9.9 15.8 23.6 15.8 38.6 0 30.3-24.6 54.9-54.9 54.9S26.1 112.9 26.1 82.6 50.7 27.7 81 27.7l4.5-13.8C82.7 11.1 79.2 10.3 75.5 10.3z"
 				/>
 			</svg>
-			<h1 class="text-2xl md:text-3xl md:font-bold text-[#65e4e4]">Power Digital</h1>
+			<h1 class="text-2xl md:text-3xl md:font-bold text-[#65e4e4]">
+				Power Digital
+			</h1>
+		</div>
+		<div class="fixed top-6 right-5 z-50">
+			<a
+				href="https://t.me/@CS_112266"
+				target="_blank"
+				class="text-white md:px-4 py-2 cursor-pointer flex items-center gap-2 duration-300"
+			>
+				<span class="text-2xl md:text-3xl">💬</span>
+				<span class="hidden md:flex">Need Help ?</span>
+			</a>
 		</div>
 
 		<!-- Banner Slider -->
@@ -134,7 +149,7 @@
 				href="{% url 'staking' %}"
 				class="bg-gray-800 rounded-xl p-4 flex flex-col items-center text-center card-hover"
 			>
-				<span class="text-2xl md:text-4xl">🔒🪙</span>
+				<span class="text-2xl md:text-4xl">🔒</span>
 				<span class="text-sm font-semibold mt-2">Staking</span>
 			</a>
 		</div>
