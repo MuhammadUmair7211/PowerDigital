@@ -1,0 +1,148 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>User Support</title>
+		<link
+			href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css"
+			rel="stylesheet"
+		/>
+	</head>
+	<body>
+		<div class="text-white absolute top-10 left-10">
+			<a
+				href="/index"
+				class="inline-flex items-center space-x-2 text-white bg-gray-800 px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-300"
+			>
+				<svg
+					class="w-5 h-5"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M15 19l-7-7 7-7"
+					/>
+				</svg>
+				<span>Back</span>
+			</a>
+		</div>
+		<div
+			class="min-h-screen flex items-center justify-center bg-gray-900 px-4 py-10"
+		>
+			<div class="max-w-3xl w-full text-center">
+				<h1 class="text-4xl font-bold text-white mb-4">User Support</h1>
+				<p class="text-gray-400 mb-8">
+					Reach out to us through any of the following platforms:
+				</p>
+
+				<div class="grid grid-cols-2 sm:grid-cols-3 gap-6">
+					<!-- Facebook -->
+					<a
+						href="https://facebook.com/YourPage"
+						target="_blank"
+						class="group bg-gray-800 p-4 rounded-xl shadow hover:bg-blue-600 transition duration-300 flex flex-col items-center"
+					>
+						<svg
+							class="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-300"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path
+								d="M22 12a10 10 0 10-11.63 9.88v-6.99h-2.3v-2.89h2.3v-2.2c0-2.27 1.35-3.52 3.42-3.52.99 0 2.02.18 2.02.18v2.22h-1.14c-1.12 0-1.47.69-1.47 1.39v1.68h2.5l-.4 2.89h-2.1V21.9A10 10 0 0022 12z"
+							/>
+						</svg>
+						<span class="mt-2 text-white font-semibold group-hover:text-white"
+							>Facebook</span
+						>
+					</a>
+
+					<!-- Telegram -->
+					<a
+						href="https://t.me/+17167956489"
+						target="_blank"
+						class="group bg-gray-800 p-4 rounded-xl shadow hover:bg-blue-500 transition duration-300 flex flex-col items-center"
+					>
+						<svg
+							class="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-300"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path
+								d="M9.03 15.6l-.39 3.66c.56 0 .8-.24 1.1-.52l2.64-2.49 5.48 4.01c1.01.55 1.73.26 1.97-.93L23.96 5.5c.3-1.22-.42-1.68-1.39-1.32L1.79 10.63c-1.18.46-1.17 1.12-.21 1.41l5.97 1.86 13.87-8.68L9.03 15.6z"
+							/>
+						</svg>
+						<span class="mt-2 text-white font-semibold group-hover:text-white"
+							>Telegram</span
+						>
+					</a>
+
+					<!-- WhatsApp -->
+					<a
+						href="https://wa.me/17162183291"
+						target="_blank"
+						class="group bg-gray-800 p-4 rounded-xl shadow hover:bg-green-600 transition duration-300 flex flex-col items-center"
+					>
+						<svg
+							class="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-300"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path
+								d="M12.04 2.04C6.5 2.04 2 6.55 2 12.1c0 2.03.66 3.9 1.78 5.46L2 22l4.56-1.2c1.52.85 3.26 1.34 5.13 1.34 5.54 0 10.04-4.51 10.04-10.06 0-5.54-4.51-10.04-10.06-10.04zm0 18.16c-1.49 0-2.87-.42-4.05-1.16l-.29-.18-2.7.71.72-2.63-.18-.27a8.07 8.07 0 01-1.2-4.3c0-4.49 3.65-8.14 8.14-8.14s8.14 3.65 8.14 8.14-3.65 8.14-8.14 8.14z"
+							/>
+						</svg>
+						<span class="mt-2 text-white font-semibold group-hover:text-white"
+							>WhatsApp</span
+						>
+					</a>
+
+					<!-- Email -->
+					<a
+						href="mailto:support@yourdomain.com"
+						class="group bg-gray-800 p-4 rounded-xl shadow hover:bg-red-600 transition duration-300 flex flex-col items-center"
+					>
+						<svg
+							class="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-300"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path
+								d="M12 13.065l-11-6.5v12.735h22V6.565l-11 6.5zM12 11L1 4.5h22L12 11z"
+							/>
+						</svg>
+						<span class="mt-2 text-white font-semibold group-hover:text-white"
+							>Email</span
+						>
+					</a>
+					<!-- twitter -->
+					<a
+						href="https://twitter.com/yourhandle"
+						target="_blank"
+						rel="noopener noreferrer"
+						title="Follow us on Twitter"
+						class="group bg-gray-800 p-4 rounded-xl shadow hover:bg-blue-500 transition duration-300 flex flex-col items-center"
+					>
+						<svg
+							class="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-300"
+							viewBox="0 0 24 24"
+							fill="currentColor"
+						>
+							<path
+								d="M22.46 6c-.77.35-1.6.58-2.46.69a4.25 4.25 0 0 0 1.88-2.34c-.83.5-1.75.85-2.72 1.04a4.23 4.23 0 0 0-7.21 3.86c-3.52-.18-6.65-1.86-8.75-4.42a4.22 4.22 0 0 0 1.31 5.65 4.21 4.21 0 0 1-1.91-.53v.05a4.23 4.23 0 0 0 3.39 4.14c-.47.13-.97.2-1.48.2-.36 0-.71-.04-1.06-.1a4.24 4.24 0 0 0 3.95 2.94A8.5 8.5 0 0 1 2 19.53a11.97 11.97 0 0 0 6.29 1.84c7.55 0 11.68-6.26 11.68-11.68 0-.18-.01-.36-.02-.54A8.36 8.36 0 0 0 24 5.54a8.19 8.19 0 0 1-2.36.65 4.14 4.14 0 0 0 1.81-2.29z"
+							/>
+						</svg>
+						<span class="mt-2 text-white font-semibold group-hover:text-white"
+							>Twitter</span
+						>
+					</a>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

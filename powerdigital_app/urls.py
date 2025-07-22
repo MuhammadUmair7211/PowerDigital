@@ -54,6 +54,7 @@ urlpatterns = [
     path('ad/invite/approve/<int:profile_id>/', views.approve_user, name='approve_user'),
     path('ad/deposits_list/', views.admin_deposit_list_view, name='admin_deposit_list_view'),
     path('support/', views.support_chat, name='support_chat'), 
+    path('support-page/', views.support_page, name='support_page'),
     path('ad/support/', views.admin_support_dashboard, name='admin_support_dashboard'),  
     path('ad/support/<int:user_id>/', views.admin_chat_with_user, name='admin_chat_with_user'),
   

@@ -1,239 +1,247 @@
-{% extends 'main/base.html' %}
-{% block content %}
+{% extends 'main/base.html' %} {% block content %}
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>User Dashboard</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://cdn.tailwindcss.com"></script>
+	<head>
+		<meta charset="UTF-8" />
+		<title>User Dashboard</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<script src="https://cdn.tailwindcss.com"></script>
 
+		<style>
+			* {
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
 
-  <style>
+			body {
+				background-color: #0f172a;
+				color: white;
+				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+				min-height: 100vh;
+				padding-bottom: 40px;
+			}
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+			a {
+				text-decoration: none;
+				color: inherit;
+			}
 
-    body {
-      background-color: #0f172a;
-      color: white;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      min-height: 100vh;
-      padding-bottom: 40px;
-    }
+			.back-button {
+				padding: 20px;
+			}
 
-    a {
-      text-decoration: none;
-      color: inherit;
-    }
+			.back-button a {
+				display: flex;
+				align-items: center;
+				color: #94a3b8;
+				font-size: 18px;
+				transition: color 0.3s;
+			}
 
-    
-    .back-button {
-      padding: 20px;
-    }
+			.back-button a:hover {
+				color: #cbd5e1;
+			}
 
-    .back-button a {
-      display: flex;
-      align-items: center;
-      color: #94a3b8;
-      font-size: 18px;
-      transition: color 0.3s;
-    }
+			.back-button svg {
+				width: 24px;
+				height: 24px;
+				margin-right: 8px;
+			}
 
-    .back-button a:hover {
-      color: #cbd5e1;
-    }
+			.container {
+				max-width: 800px;
+				margin: 0 auto;
+				padding: 30px 20px;
+			}
 
-    .back-button svg {
-      width: 24px;
-      height: 24px;
-      margin-right: 8px;
-    }
+			.card {
+				background-color: #1e293b;
+				border-radius: 15px;
+				padding: 30px;
+				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+			}
 
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 30px 20px;
-    }
+			.user-info {
+				background-color: #23344e;
+				border-radius: 10px;
+				padding: 25px;
+				text-align: center;
+				margin-bottom: 30px;
+			}
 
-    .card {
-      background-color: #1e293b;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-    }
+			.user-info h2 {
+				font-size: 28px;
+				font-weight: bold;
+				margin-bottom: 8px;
+			}
 
-    
-    .user-info {
-      background-color: #23344e;
-      border-radius: 10px;
-      padding: 25px;
-      text-align: center;
-      margin-bottom: 30px;
-    }
+			.user-info p {
+				font-size: 16px;
+				color: #7dd3fc;
+			}
 
-    .user-info h2 {
-      font-size: 28px;
-      font-weight: bold;
-      margin-bottom: 8px;
-    }
+			.verified-tag {
+				background-color: #16a34a;
+				color: #fff;
+				font-size: 0.75rem;
+				padding: 4px 10px;
+				border-radius: 999px;
+				margin-left: 10px;
+				vertical-align: middle;
+				font-weight: 600;
+			}
 
-    .user-info p {
-      font-size: 16px;
-      color: #7dd3fc;
-    }
+			.invite-list {
+				margin-top: 20px;
+				list-style: none;
+				padding: 0;
+				display: flex;
+				flex-direction: column;
+				gap: 10px;
+				align-items: center;
+			}
 
-    .verified-tag {
-      background-color: #16a34a;
-      color: #fff;
-      font-size: 0.75rem;
-      padding: 4px 10px;
-      border-radius: 999px;
-      margin-left: 10px;
-      vertical-align: middle;
-      font-weight: 600;
-    }
+			.invite-item {
+				background-color: #374151;
+				padding: 10px 16px;
+				border-radius: 8px;
+				border: 1px solid #6366f1;
+				width: 100%;
+				max-width: 350px;
+				text-align: center;
+				font-size: 15px;
+				transition: background 0.3s ease;
+			}
 
-    .invite-list {
-      margin-top: 20px;
-      list-style: none;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
-    }
+			.invite-item:hover {
+				background-color: #232050;
+			}
 
-    .invite-item {
-      background-color: #374151;
-      padding: 10px 16px;
-      border-radius: 8px;
-      border: 1px solid #6366f1;
-      width: 100%;
-      max-width: 350px;
-      text-align: center;
-      font-size: 15px;
-      transition: background 0.3s ease;
-    }
+			.nav {
+				margin-top: 20px;
+				display: flex;
+				flex-direction: column;
+				gap: 12px;
+			}
 
-    .invite-item:hover {
-      background-color: #232050;
-    }
+			.nav a {
+				padding: 14px 20px;
+				border-radius: 8px;
+				background-color: #23344e;
+				color: #60a5fa;
+				font-size: 16px;
+				border: 1px solid #334155;
+				transition: all 0.3s ease;
+				text-align: center;
+			}
 
-    
-    .nav {
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
+			.nav a:hover {
+				background-color: #334155;
+				transform: translateX(8px);
+			}
 
-    .nav a {
-      padding: 14px 20px;
-      border-radius: 8px;
-      background-color: #23344e;
-      color: #60a5fa;
-      font-size: 16px;
-      border: 1px solid #334155;
-      transition: all 0.3s ease;
-      text-align: center;
-    }
+			.nav a.logout {
+				color: #f87171;
+			}
 
-    .nav a:hover {
-      background-color: #334155;
-      transform: translateX(8px);
-    }
+			.nav a.logout:hover {
+				background-color: #7f1d1d;
+			}
 
-    .nav a.logout {
-      color: #f87171;
-    }
+			/* Responsive */
+			@media (max-width: 600px) {
+				.user-info h2 {
+					font-size: 22px;
+				}
 
-    .nav a.logout:hover {
-      background-color: #7f1d1d;
-    }
+				.user-info p {
+					font-size: 14px;
+				}
 
-    /* Responsive */
-    @media (max-width: 600px) {
-      .user-info h2 {
-        font-size: 22px;
-      }
+				.invite-item {
+					width: 100%;
+					max-width: 100%;
+					font-size: 14px;
+				}
 
-      .user-info p {
-        font-size: 14px;
-      }
+				.nav a {
+					font-size: 15px;
+					padding: 12px 16px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<!-- Back Button -->
+		<div class="back-button">
+			<a href="javascript:history.back()">
+				<svg
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					viewBox="0 0 24 24"
+					xmlns="http://www.w3.org/2000/svg"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						d="M15 19l-7-7 7-7"
+					></path>
+				</svg>
+				<span>Back</span>
+			</a>
+		</div>
 
-      .invite-item {
-        width: 100%;
-        max-width: 100%;
-        font-size: 14px;
-      }
+		<!-- Main Content -->
+		<div class="container">
+			<div class="card">
+				<!-- User Info -->
+				<div class="user-info">
+					<h2 style="color: white">
+						👤 {{ user.username }} {% if is_verified %}
+						<span class="verified-tag">Verified</span>
+						{% endif %}
+					</h2>
+					<p>{{ user.email }}</p>
 
-      .nav a {
-        font-size: 15px;
-        padding: 12px 16px;
-      }
-    }
-  </style>
-</head>
-<body>
+					<ul class="invite-list">
+						{% for i in pro %}
+						<li class="invite-item" style="color: white">
+							🎟️ Invite Code - {{ i.invite_code }}
+						</li>
+						{% endfor %}
+					</ul>
+				</div>
 
-  <!-- Back Button -->
-  <div class="back-button">
-    <a href="javascript:history.back()">
-      <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-           xmlns="http://www.w3.org/2000/svg">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
-      </svg>
-      <span>Back</span>
-    </a>
-  </div>
+				<!-- Navigation -->
+				<nav class="nav">
+					{% block translate_selector %}
+					<div
+						id="google_translate_element"
+						class="fixed top-4 right-4 z-50"
+					></div>
+					{% endblock %}
 
-  <!-- Main Content -->
-  <div class="container">
-    <div class="card">
+					<a href="{% url 'verify_identity' %}">🧾 Real Name Authentication</a>
+					<a href="{% url 'reset_password' %}">🔐 Reset Login Password</a>
+					<a href="{% url 'bank_detail' %}">💳 Bind Bank Card</a>
+					<a href="{% url 'withdrawal_success' %}"
+						>🏦 Manage Withdrawal Address</a
+					>
+					<a href="{% url 'set_withdrawal_password' %}"
+						>🔑 Change Withdrawal Password</a
+					>
+					<a href="{% url 'support_page' %}" class="text-indigo-600"
+						>💬 User Support</a
+					>
 
-      <!-- User Info -->
-      <div class="user-info">
-        <h2 style="color:white ;">👤 {{ user.username }}
-          {% if is_verified %}
-            <span class="verified-tag">Verified</span>
-          {% endif %}
-        </h2>
-        <p>{{ user.email }}</p>
-
-        <ul class="invite-list">
-          {% for i in pro %}
-            <li class="invite-item" style="color:white ;">🎟️ Invite Code - {{ i.invite_code }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-
-      <!-- Navigation -->
-      <nav class="nav">
-        {% block translate_selector %}
-        <div id="google_translate_element" class="fixed top-4 right-4 z-50"></div>
-        {% endblock %}
-
-        <a href="{% url 'verify_identity' %}">🧾 Real Name Authentication</a>
-        <a href="{% url 'reset_password' %}">🔐 Reset Login Password</a>
-        <a href="{% url 'bank_detail' %}">💳 Bind Bank Card</a>
-        <a href="{% url 'withdrawal_success' %}">🏦 Manage Withdrawal Address</a>
-        <a href="{% url 'set_withdrawal_password' %}">🔑 Change Withdrawal Password</a>
-        <a href="{% url 'login' %}" class="logout">🚪 Logout</a>
-      </nav>
-
-    </div>
-  </div>
-
-</body>
+					<a href="{% url 'login' %}" class="logout">🚪 Logout</a>
+				</nav>
+			</div>
+		</div>
+	</body>
 </html>
 
-
 {% endblock %}
-
-
-				

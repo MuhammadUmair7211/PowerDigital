@@ -21,6 +21,14 @@ from .forms import TradeOrderForm , SubscriptionItemForm ,  BannerSetForm , Admi
 
 
 
+from django.shortcuts import render
+
+def support_page(request):
+    return render(request, 'index/support_page.html')
+
+
+
+
 def admin_required(function):
     @wraps(function)
     def _wrapped_view(request, *args, **kwargs):
