@@ -18,10 +18,9 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from .forms import TradeOrderForm , SubscriptionItemForm ,  BannerSetForm , AdminRegisterForm , WithdrawalRequestForm , DepositForm , UserBankDetailForm , PasswordResetForm , IdentityVerificationForm
+from django.utils import timezone
+from datetime import timedelta
 
-
-
-from django.shortcuts import render
 
 def support_page(request):
     return render(request, 'index/support_page.html')
@@ -54,11 +53,8 @@ def register_view(request):
 
         user = User.objects.create_user(username=username, email=email, password=password)
         profile = user.profile  # Access via related name
-
-        # Optional: Notify admin here via email or display in admin portal
         login(request, user)  # Login only if you want restricted access
-        return redirect('invite_pending')  # New page to tell user they're waiting for approval
-
+        return redirect('home')
     return render(request, 'authentication/register.html')
 
 
@@ -66,7 +62,6 @@ def register_view(request):
 
 def login_view(request):
     error = None
-
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -80,9 +75,6 @@ def login_view(request):
             else:
                 user = authenticate(request, username=username, password=password)
                 if user is not None:
-                    # Check invite approval
-                    if hasattr(user, 'profile') and not user.profile.is_approved:
-                        return redirect('invite_pending')  # redirect to waiting page
                     login(request, user)
                     return redirect('home')
                 else:
@@ -133,16 +125,24 @@ def get_profit_percentage(expiry_time):
 
 
 
+
+@login_required
 @transaction.atomic
 def place_trade(request):
     if request.method == "POST":
         pair = request.POST.get('trading_pair')
-        direction = request.POST.get('direction')
-        amount = Decimal(request.POST.get('custom_amount') or "0")
-        expiry_time = int(request.POST.get('expiry_time'))
+        direction = request.POST.get('direction')  # "up" or "down"
+        try:
+            amount = Decimal(request.POST.get('custom_amount') or "0")
+        except Exception:
+            return JsonResponse({'success': False, 'error': 'Invalid amount.'})
+        try:
+            expiry_time = int(request.POST.get('expiry_time') or 0)
+        except Exception:
+            return JsonResponse({'success': False, 'error': 'Invalid expiry time.'})
 
-        profit_percent = get_profit_percentage(expiry_time)
-        potential_profit = amount * profit_percent
+        if amount <= 0 or expiry_time <= 0 or direction not in ["up", "down"]:
+            return JsonResponse({'success': False, 'error': 'Invalid trade data.'})
 
         profile = Profile.objects.select_for_update().get(user=request.user)
         total_balance = profile.total_balance
@@ -150,19 +150,34 @@ def place_trade(request):
         if total_balance < amount:
             return JsonResponse({'success': False, 'error': 'Insufficient balance'})
 
-        # Deduct amount upfront
-        remaining_amount = amount
-        if profile.total_deposit >= remaining_amount:
-            profile.total_deposit -= remaining_amount
+        # Deduct balance in order: credit → deposit → profit
+        remaining = amount
+
+        if profile.credit >= remaining:
+            profile.credit -= remaining
+            remaining = 0
         else:
-            remaining_amount -= profile.total_deposit
-            profile.total_deposit = 0
-            profile.total_profit -= remaining_amount
+            remaining -= profile.credit
+            profile.credit = 0
+
+        if remaining > 0 and profile.total_deposit >= remaining:
+            profile.total_deposit -= remaining
+            remaining = 0
+        elif remaining > 0:
+            remainder = remaining
+            if profile.total_profit >= remainder:
+                profile.total_profit -= remainder
+                remaining = 0
+            else:
+                return JsonResponse({'success': False, 'error': 'Not enough funds in deposit or profit'})
 
         profile.save()
 
-        # Save trade order with potential profit
-        TradeOrder.objects.create(
+        profit_percent = get_profit_percentage(expiry_time)
+        potential_profit = round(amount * profit_percent, 2)
+
+        # Save trade order
+        trade = TradeOrder.objects.create(
             user=request.user,
             pair=pair,
             direction="Buy Up" if direction == "up" else "Buy Down",
@@ -170,13 +185,21 @@ def place_trade(request):
             expiry_time=expiry_time,
             balance=total_balance,
             potential_profit=potential_profit,
+            expires_at=timezone.now() + timedelta(seconds=expiry_time),
             is_closed=False
         )
 
-        return JsonResponse({'success': True})
+        return JsonResponse({
+            'success': True,
+            'trade_id': trade.id,
+            'expires_at': trade.expires_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'profit_added': str(potential_profit)
+        })
 
-    return render(request, "main/contract.html")
-
+    return render(request, "main/contract.html", {
+    'expiry_options': [60, 120, 180, 300, 360],
+    'quick_amounts': [10, 25, 50, 100, 250, 500, 1000],
+})
 
 
 
@@ -191,21 +214,23 @@ def submit_order(request):
             return redirect('order_success') 
     return redirect('home')
 
+
+
+
+
+
+@login_required
 def user_trades(request):  
+    if request.user.is_staff or request.user.is_superuser:
+        return redirect('admin_dashboard')
+    
     trades = TradeOrder.objects.filter(user=request.user).order_by('-created_at')
     profile, _ = Profile.objects.get_or_create(user=request.user)
-
-    approved_total = Deposit.objects.filter(
-        user=request.user, is_approved=True
-    ).aggregate(total=Sum('amount'))['total'] or 0
-
-    profile.total_deposit = approved_total
-    profile.save()
-
+  
     total_profit = profile.total_profit
-    total_credit = profile.credit  # ✅ Add this line
-
-    total_balance = profile.total_deposit + total_profit + total_credit  # ✅ Include credit in balance
+    total_credit = profile.credit
+    total_deposit = profile.total_deposit 
+    total_balance = total_deposit + total_profit
 
     # Pagination setup (10 trades per page)
     paginator = Paginator(trades, 10)
@@ -213,24 +238,16 @@ def user_trades(request):
     page_obj = paginator.get_page(page_number)
 
     return render(request, "main/assets.html", {
-        "user_trades": trades,
-        "total_deposit": approved_total,
+        "user_trades": page_obj,  # ✅ Paginated trades
+        "total_deposit": total_deposit,
         "total_profit": total_profit,
         "total_balance": total_balance,
-        "credit": total_credit,  # ✅ Add to context
-        "page_obj": page_obj
+        "credit": total_credit,
+        "page_obj": page_obj,
     })
 
 
-
-
-
-
-
-
-
-
-
+@login_required
 def profile(request):
     pro = Profile.objects.filter(user=request.user)
     
@@ -246,7 +263,7 @@ def profile(request):
 
 
 
-
+@login_required
 def verify_identity(request):
     if request.method == 'POST':
         try:
@@ -515,11 +532,10 @@ def trade_review_admin(request):
 
 
 
+@staff_member_required
 def admin_dashboard(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     return render(request, 'admins/dashboard.html')
-
 
 
 
@@ -609,7 +625,6 @@ def approve_deposit(request, deposit_id):
 
 
 def admin_login_view(request):
-         
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
@@ -617,7 +632,6 @@ def admin_login_view(request):
         user = authenticate(request, username=username, password=password)
         if user and user.is_staff:
             login(request, user)
-            # Ensure Profile exists
             Profile.objects.get_or_create(user=user)
             return redirect('admin_dashboard')
         else:
@@ -627,34 +641,60 @@ def admin_login_view(request):
 
 
 
-
-
-from django.contrib.auth import authenticate, login
+from django.contrib.auth.models import User
+from django.contrib.auth import login
+from django.contrib import messages
+from .forms import AdminRegisterForm
+from django.shortcuts import render, redirect
 
 def admin_register_view(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         form = AdminRegisterForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.is_staff = True  # Make the user an admin
+            username = form.cleaned_data['username']
+            email = form.cleaned_data['email']
+            password = form.cleaned_data['password']
+
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password
+            )
+            user.is_staff = True  # ✅ Mark user as admin/staff
             user.save()
 
-            Profile.objects.get_or_create(user=user)  # Ensure profile is created
-
-            # ✅ Authenticate and log in the user
-            new_user = authenticate(request, username=user.username, password=form.cleaned_data['password'])
-            if new_user:
-                login(request, new_user)
-                messages.success(request, "Admin account created and logged in successfully.")
-                return redirect('admin_dashboard')  # or wherever admins go
-
-            messages.success(request, "Admin account created. Please log in.")
-            return redirect('admin_login')  # fallback
+            messages.success(request, 'Admin registered successfully!')
+            return redirect('admin_login')
     else:
         form = AdminRegisterForm()
 
     return render(request, 'admins/admin_register.html', {'form': form})
+
+
+@staff_member_required
+def all_admins_view(request):
+    admins = User.objects.filter(is_staff=True)
+    if not admins.exists():
+        return redirect('admin_register')
+    return render(request, 'admins/all_admins.html', {'admins': admins})
+
+
+
+
+
+@staff_member_required
+def delete_admin_view(request, admin_id):
+    admin_user = get_object_or_404(User, id=admin_id, is_staff=True)
+    
+    if request.user == admin_user:
+        messages.error(request, "You can't delete yourself.")
+    else:
+        admin_user.delete()
+        messages.success(request, "Admin deleted successfully.")
+
+    return redirect('all_admins')
+
+
 
 
 
@@ -724,38 +764,82 @@ def update_trade_profit(request, trade_id):
     return redirect('admin_trades')
 
 
+from django.contrib.admin.views.decorators import staff_member_required
+from django.core.paginator import Paginator
+from django.contrib import messages
+from django.db.models import Q
+from decimal import Decimal, InvalidOperation
+from django.shortcuts import get_object_or_404, redirect, render
+from .models import Profile
+from django.contrib.auth.models import User
+
 @staff_member_required
 def all_users_view(request):
     query = request.GET.get('q', '')
 
+    # Exclude staff/admin accounts
     profiles = Profile.objects.select_related('user') \
-        .exclude(user__username__startswith='admin') \
+        .filter(user__is_staff=False, user__is_superuser=False) \
         .filter(Q(user__username__icontains=query)) \
         .order_by('-user__date_joined')
 
-    paginator = Paginator(profiles, 10)  # 10 users per page
+    paginator = Paginator(profiles, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     if request.method == 'POST':
         profile_id = request.POST.get('profile_id')
-        new_score = request.POST.get('credit_score')
+        action = request.POST.get('action')
         profile = get_object_or_404(Profile, id=profile_id)
-        try:
-            profile.credit_score = int(new_score)
-            profile.save()
-        except ValueError:
-            pass
-        return redirect('all_users')  # Update with your actual URL name
+
+        if action == 'delete':
+            user = profile.user
+            username = user.username
+            user.delete()
+            messages.success(request, f"User '{username}' deleted successfully.")
+            return redirect('all_users')
+
+        elif action == 'update':
+            updated_fields = []
+            try:
+                credit = request.POST.get('credit')
+                if credit is not None:
+                    credit_decimal = Decimal(credit)
+                    if credit_decimal != profile.credit:
+                        profile.credit += credit_decimal
+                        updated_fields.append("Credit")
+
+                profit = request.POST.get('total_profit')
+                if profit is not None:
+                    profit_decimal = Decimal(profit)
+                    if profit_decimal != profile.total_profit:
+                        profile.total_profit += profit_decimal
+                        updated_fields.append("Profit")
+
+                deposit = request.POST.get('total_deposit')
+                if deposit is not None:
+                    deposit_decimal = Decimal(deposit)
+                    if deposit_decimal != profile.total_deposit:
+                        profile.total_deposit += deposit_decimal
+                        updated_fields.append("Deposit")
+
+                if updated_fields:
+                    profile.save()
+                    messages.success(
+                        request,
+                        f"{profile.user.username}'s " +
+                        ", ".join(updated_fields) +
+                        " updated successfully."
+                    )
+                else:
+                    messages.info(request, "No changes detected for this user.")
+            except (InvalidOperation, ValueError, TypeError):
+                messages.error(request, "Invalid input detected. Please enter valid numbers.")
 
     return render(request, 'admins/all_users.html', {
         'page_obj': page_obj,
         'query': query,
     })
-
-
-
-
 
 
 def admin_invite_list(request):
@@ -766,7 +850,6 @@ def admin_invite_list(request):
 
 def approve_user(request, profile_id):
     profile = Profile.objects.get(id=profile_id)
-    profile.is_approved = True
     profile.save()
     return redirect('admin_invite_list')
 

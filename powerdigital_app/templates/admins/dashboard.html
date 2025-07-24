@@ -1,6 +1,4 @@
-{% extends 'admins/admin_base.html' %} 
-
-{% load static %} {% block content %}
+{% extends 'admins/admin_base.html' %} {% load static %} {% block content %}
 <!DOCTYPE html>
 <html lang="en">
 	<head>
@@ -99,12 +97,6 @@
 			<h2><i class="fas fa-tachometer-alt text-4xl"></i> Admin Dashboard</h2>
 			<br />
 			<div class="grid">
-				<a href="{% url 'admin_invite_list' %}" class="card">
-					<i class="fas fa-user-check"></i>
-					<h4>Approve Profile</h4>
-					<p>Accept or reject newly registered users</p>
-				</a>
-
 				<a href="{% url 'verification_list' %}" class="card">
 					<i class="fas fa-id-card"></i>
 					<h4>Verify Identity</h4>
@@ -123,10 +115,10 @@
 					<p>Upload promotional banner images</p>
 				</a>
 
-				<a href="{% url 'admin_trades' %}" class="card">
-					<i class="fas fa-chart-line"></i>
-					<h4>Manage Trades</h4>
-					<p>Update user trading performance</p>
+				<a href="{% url 'all_admins' %}" class="card">
+					<i class="fas fa-user-shield"></i>
+					<h4>All Available Admins</h4>
+					<p>View and manage registered admin accounts</p>
 				</a>
 
 				<a href="{% url 'admin_deposits' %}" class="card">
@@ -144,13 +136,6 @@
 					<h4>Users Withdrawals</h4>
 					<p>View Users Withdrawals</p>
 				</a>
-
-				<a href="{% url 'admin_support_dashboard' %}" class="card">
-					<i class="fas fa-comments"></i>
-					<h4>User Queries</h4>
-					<p>Respond to support chats from users</p>
-				</a>
-
 				<a href="{% url 'create_subscription_item' %}" class="card">
 					<i class="fas fa-box-open"></i>
 					<h4>Manage Subscriptions</h4>

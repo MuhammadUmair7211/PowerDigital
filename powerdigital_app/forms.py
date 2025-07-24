@@ -84,22 +84,36 @@ class WithdrawalRequestForm(forms.ModelForm):
 
 
 
-class AdminRegisterForm(forms.ModelForm):
+from django import forms
+from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+
+class AdminRegisterForm(forms.Form):
+    username = forms.CharField(max_length=150)
+    email = forms.EmailField()
     password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
 
-    class Meta:
-        model = User
-        fields = ['username', 'email', 'password']
-
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get('password')
-        confirm_password = cleaned_data.get('confirm_password')
-        if password and confirm_password and password != confirm_password:
-            raise forms.ValidationError("Passwords do not match.")
+        username = cleaned_data.get("username")
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("This username is already taken.")
+
+        password = cleaned_data.get("password")
+        confirm = cleaned_data.get("confirm_password")
+        if password and confirm and password != confirm:
+            raise ValidationError("Passwords do not match.")
         return cleaned_data
-    
+
+    def save(self):
+        data = self.cleaned_data
+        user = User.objects.create_superuser(
+            username=data['username'],
+            email=data['email'],
+            password=data['password'],
+        )
+        return user
 
 
 

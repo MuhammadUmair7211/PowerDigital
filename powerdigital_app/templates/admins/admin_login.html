@@ -1,148 +1,61 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<title>Admin Login</title>
-		<link
-			rel="icon"
-			type="image/svg+xml"
-			href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 151 174" fill="%23d32f2f"><path d="M74.5 4.5h27.1l-17.4 55.8h22.6L74.8 148.6l4.7-44.5H57.6l17.1-44.5H57.4L74.5 4.5z"/><path d="M75.5 0C34.1 0 0 34.1 0 75.5S34.1 151 75.5 151c41.3 0 75.5-34.1 75.5-75.5 0-21.7-9-41.3-23.5-55.1l-7.5 23.1c9.8 9.9 15.8 23.6 15.8 38.6 0 30.3-24.6 54.9-54.9 54.9S26.1 112.9 26.1 82.6 50.7 27.7 81 27.7l4.5-13.8C82.7 11.1 79.2 10.3 75.5 10.3z"/></svg>'
-		/>
-		<style>
-			body {
-				background-color: #0f172a;
-				font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-				margin: 0;
-				padding: 0;
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				min-height: 100vh;
-				color: #e2e8f0;
-			}
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="{% static 'admin-icon.svg' %}" type="image/svg+xml">
+</head>
+<body class="bg-slate-900 flex items-center justify-center min-h-screen text-slate-100">
+  <div class="w-full max-w-md bg-slate-800 p-8 rounded-xl shadow-lg">
+    <h2 class="text-2xl font-semibold text-center text-cyan-400 mb-6">🛠️ Admin Login</h2>
 
-			.login-card {
-				background-color: #1e293b;
-				padding: 40px;
-				border-radius: 12px;
-				box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
-				width: 100%;
-				max-width: 400px;
-			}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="bg-red-500 text-white text-sm p-2 rounded mb-4 text-center">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
 
-			.login-card h2 {
-				text-align: center;
-				font-size: 24px;
-				color: #38bdf8;
-				margin-bottom: 24px;
-			}
+    <form method="post" class="space-y-5">
+      {% csrf_token %}
+      <div>
+        <label for="username" class="block text-sm mb-1 text-slate-300">Username</label>
+        <input
+          type="text"
+          id="username"
+          name="username"
+          required
+          placeholder="Enter your username"
+          class="w-full px-4 py-2 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+      </div>
 
-			.login-card form {
-				display: flex;
-				flex-direction: column;
-			}
+      <div>
+        <label for="password" class="block text-sm mb-1 text-slate-300">Password</label>
+        <input
+          type="password"
+          id="password"
+          name="password"
+          required
+          placeholder="Enter your password"
+          class="w-full px-4 py-2 rounded-lg border border-slate-600 bg-slate-900 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+        />
+      </div>
 
-			.form-group {
-				margin-bottom: 20px;
-			}
+      <button
+        type="submit"
+        class="w-full bg-cyan-600 hover:bg-cyan-700 transition duration-300 text-white py-2 rounded-lg font-medium"
+      >
+        🔓 Login
+      </button>
+    </form>
 
-			.form-group label {
-				display: block;
-				margin-bottom: 6px;
-				font-size: 14px;
-				color: #cbd5e1;
-			}
-
-			.form-group input {
-				width: 100%;
-				padding: 10px;
-				border: 1px solid #475569;
-				border-radius: 8px;
-				background-color: #0f172a;
-				color: #fff;
-				font-size: 14px;
-			}
-
-			.form-group input:focus {
-				border-color: #3b82f6;
-				outline: none;
-			}
-
-			.login-card button {
-				background-color: #2563eb;
-				color: #fff;
-				border: none;
-				padding: 12px;
-				border-radius: 8px;
-				font-size: 15px;
-				cursor: pointer;
-				transition: background-color 0.3s ease;
-			}
-
-			.login-card button:hover {
-				background-color: #1d4ed8;
-			}
-
-			.message {
-				color: #f87171;
-				font-size: 13px;
-				margin-bottom: 10px;
-			}
-
-			.footer-link {
-				text-align: center;
-				margin-top: 20px;
-				font-size: 13px;
-			}
-
-			.footer-link a {
-				color: #60a5fa;
-				text-decoration: none;
-			}
-
-			.footer-link a:hover {
-				text-decoration: underline;
-			}
-		</style>
-	</head>
-	<body>
-		<div class="login-card">
-			<h2>🛠️ Admin Login</h2>
-
-			{% if messages %} {% for msg in messages %}
-			<div class="message">{{ msg }}</div>
-			{% endfor %} {% endif %}
-
-			<form method="post">
-				{% csrf_token %}
-				<div class="form-group">
-					<label for="username">Username</label>
-					<input
-						type="text"
-						id="username"
-						name="username"
-						placeholder="Enter your username"
-						required
-					/>
-				</div>
-
-				<div class="form-group">
-					<label for="password">Password</label>
-					<input
-						type="password"
-						id="password"
-						name="password"
-						placeholder="Enter your password"
-						required
-					/>
-				</div>
-				<br />
-				<button type="submit">🔓 Login</button>
-			</form>
-
-			<div class="footer-link">
-				Not an admin? <a href="{% url 'admin_register' %}">Register Admin</a>
-			</div>
-		</div>
-	</body>
+    <p class="text-center text-sm mt-6">
+      Not an admin?
+      <a href="{% url 'admin_register' %}" class="text-cyan-400 hover:underline">Register Admin</a>
+    </p>
+  </div>
+</body>
 </html>

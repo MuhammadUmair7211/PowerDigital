@@ -24,10 +24,14 @@ class TradeOrderAdmin(admin.ModelAdmin):
     list_filter = ('direction', 'pair', 'created_at')
     search_fields = ('user__username', 'pair')
 
+    def profit(self, obj):
+        return obj.potential_profit
+    profit.short_description = 'Profit'
+
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user', 'credit_score', 'total_deposit', 'total_profit', 'total_balance', 'is_approved')
+    list_display = ('user', 'credit', 'total_deposit', 'total_profit', 'total_balance')
     search_fields = ('user__username', 'invite_code')
 
 

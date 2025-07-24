@@ -8,36 +8,31 @@ from django.contrib.auth.hashers import make_password, check_password
 
 class TradeOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    pair = models.CharField(max_length=20, default="BTC/USDT")
-    direction = models.CharField(max_length=10, choices=[("Buy Up", "Buy Up"), ("Buy Down", "Buy Down")])
+    pair = models.CharField(max_length=20)
+    direction = models.CharField(max_length=20)
     amount = models.DecimalField(max_digits=20, decimal_places=8)
+    expiry_time = models.IntegerField()
+    balance = models.DecimalField(max_digits=20, decimal_places=8)
+    potential_profit = models.DecimalField(max_digits=20, decimal_places=8, default=0)
+    expires_at = models.DateTimeField()
+    is_closed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    expiry_time = models.IntegerField(default=120)  # in seconds
-    yield_percent = models.IntegerField(default=30)
-    profit = models.DecimalField(default=0, max_digits=12, decimal_places=2)
-    manual_profit = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-
+    yield_percent = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    manual_profit = models.DecimalField(max_digits=20, decimal_places=8, default=0)
     @property
     def single_trade(self):
         return (self.yield_percent or 0) + (self.manual_profit or 0)
 
-    
-
-  
 
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    credit_score = models.IntegerField(default=100)
     withdrawal_password = models.CharField(max_length=128)
     total_deposit = models.DecimalField(default=0, max_digits=12, decimal_places=2)
     total_profit = models.DecimalField(default=0, max_digits=12, decimal_places=2)
-    credit = models.DecimalField(default=0, max_digits=12, decimal_places=2)  # ✅ Add this line
-
+    credit = models.DecimalField(default=0, max_digits=12, decimal_places=2)
     invite_code = models.CharField(max_length=12, unique=True, blank=True, null=True)
-    is_approved = models.BooleanField(default=False)
-
+    
     def save(self, *args, **kwargs):
         if not self.invite_code:
             self.invite_code = str(uuid.uuid4()).split('-')[0]
@@ -45,7 +40,7 @@ class Profile(models.Model):
 
     @property
     def total_balance(self):
-        return self.total_deposit + self.total_profit + self.credit  # ✅ Include credit in balance
+        return self.total_deposit + self.total_profit + self.credit
 
     def set_withdrawal_password(self, raw_password):
         self.withdrawal_password = make_password(raw_password)
@@ -55,7 +50,6 @@ class Profile(models.Model):
 
     def __str__(self):
         return self.user.username
-
 
 
 

@@ -14,30 +14,6 @@
 				margin: 0;
 				padding: 20px;
 			}
-
-			.container {
-				max-width: 1200px;
-				margin: auto;
-				background: #1e293b;
-				padding: 30px;
-				border-radius: 12px;
-				box-shadow: 0 0 20px rgba(0, 0, 0, 0.6);
-			}
-
-			.account-summary-card {
-				background: #2d3748;
-				color: #fff;
-				padding: 20px 25px;
-				border-radius: 16px;
-				box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-				transition: transform 0.2s ease, box-shadow 0.2s ease;
-			}
-
-			.account-summary-card:hover {
-				transform: translateY(-4px);
-				box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
-			}
-
 			.account-summary-card h3 {
 				font-size: 1.5rem;
 				font-weight: 600;
@@ -136,35 +112,23 @@
 		</style>
 	</head>
 	<body>
-		<div class="container">
+		<div class="max-w-">
 			{% if request.user.is_authenticated %}
-			<div class="account-summary-card mb-4">
-				<h3><span>💼</span>Account Summary</h3>
-				<p>
-					<strong>Total Balance:</strong>
-					<span class="account-summary-value">${{ total_balance }}</span>
-				</p>
-				<div class="account-summary-details text-sm md:text-base">
-					<p class="flex flex-wrap gap-2">
-						<span class="font-semibold text-gray-300">Deposit:</span>
-						<span class="deposit text-blue-400">${{ total_deposit }}</span>
-
-						<span class="text-gray-500">|</span>
-
-						<span class="font-semibold text-gray-300">Profit:</span>
-						<span class="profit text-yellow-400">${{ total_profit }}</span>
-
-						<span class="text-gray-500">|</span>
-
-						<span class="font-semibold text-gray-300">Credit:</span>
-						<span class="credit text-purple-400">{{ credit }}</span>
-					</p>
+				<div class="p-4 bg-gray-900 text-white rounded-lg shadow-md">
+					<h2 class="text-xl md:text-3xl font-bold mb-2">💼 Account Summary</h2>
+					<p class="text-green-500 text-xl my-2 md:text-2xl"><strong>Account Balance:</strong> 
+						${{ total_balance }}</p>
+					<p class="text-blue-500"><strong> Deposit:</strong> ${{ total_deposit }}</p>
+					<p class="text-yellow-500"><strong> Profit:</strong> ${{ total_profit }}</p>
+					<p class="text-purple-500"><strong> Credit:</strong> {{ credit }}%</p>
+					<hr class="my-2 border-gray-300" />
+					
 				</div>
 			</div>
 
 			{% endif %}
 
-			<h2 style="text-align: center; color: #f1f5f9">📊 Your Trades</h2>
+			<h2 style="text-align: center; color: #f1f5f9" class="mt-4">📊 Your Trades</h2>
 
 			{% if page_obj %}
 			<table>

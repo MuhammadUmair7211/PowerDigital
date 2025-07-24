@@ -1,213 +1,90 @@
 {% extends 'admins/admin_base.html' %}
+{% load static %}
+
 {% block content %}
+<div class="px-4 py-6 sm:px-6 lg:px-8 bg-gray-900 min-h-screen text-white">
+  <h2 class="text-2xl font-semibold mb-6 text-center">All Deposits</h2>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Your Deposits</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-
-  <style>
-    body {
-      background-color: #0f172a;
-      color: #e2e8f0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .deposit-container {
-      max-width: 900px;
-      margin: auto;
-      background-color: #1e293b;
-      padding: 30px;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-    }
-
-    .deposit-header {
-      text-align: center;
-      color: #38bdf8;
-      margin-bottom: 30px;
-    }
-
-    .deposit-card {
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      padding: 16px;
-      transition: background-color 0.3s ease;
-    }
-
-    .deposit-card:hover {
-      background-color: #162033;
-    }
-
-    .deposit-info {
-      margin-bottom: 10px;
-    }
-
-    .deposit-info p {
-      margin-bottom: 4px;
-    }
-
-    .deposit-info strong {
-      color: #10b981;
-    }
-
-    .deposit-status {
-      font-weight: 600;
-      margin-top: 8px;
-    }
-
-    .approved-status {
-      color: #10b981;
-    }
-
-    .pending-status {
-      color: #fbbf24;
-    }
-
-    .proof-thumbnail {
-      width: 100%;
-      max-width: 120px;
-      aspect-ratio: 4 / 3;
-      object-fit: cover;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .proof-thumbnail:hover {
-      transform: scale(1.03);
-    }
-
-    .form-control {
-      background-color: #0f172a;
-      color: #e2e8f0;
-      border: 1px solid #334155;
-    }
-
-    .form-control::placeholder {
-      color: #94a3b8;
-    }
-
-    .btn-primary {
-      background-color: #3b82f6;
-      border: none;
-    }
-
-    .btn-primary:hover {
-      background-color: #2563eb;
-    }
-
-    .pagination .page-link {
-      background-color: #1e293b;
-      color: #e2e8f0;
-      border: 1px solid #334155;
-    }
-
-    .pagination .page-item.active .page-link {
-      background-color: #38bdf8;
-      border-color: #38bdf8;
-      color: #0f172a;
-    }
-  </style>
-</head>
-<body>
-
-<br><br>
-
-<div class="deposit-container">
-  <h2 class="deposit-header">💸All Users Deposits</h2>
-
- <form method="get" class="mb-4 d-flex flex-column flex-sm-row gap-2 align-items-start justify-content-sm-center">
-  <input type="text" name="search" class="form-control" placeholder="Search by username"
-         value="{{ search_query }}" style="max-width: 300px;">
-  <button type="submit" class="btn btn-primary">Search</button>
- </form>
-
-  <!-- Deposit Cards -->
-  {% for deposit in deposits %}
-    <div class="deposit-card">
-      <div class="d-flex flex-column flex-sm-row align-items-start justify-content-between gap-3">
-        <div class="deposit-info d-flex flex-column flex-sm-row flex-wrap align-items-center gap-2 w-100">
-            <span><strong></strong> {{ deposit.user.username }}</span>
-            <span><strong>{{ deposit.currency }}</strong> - {{ deposit.amount }}</span>
+  <div class="overflow-x-auto">
+    <table class="min-w-full text-sm divide-y divide-gray-700 bg-gray-800 rounded-lg shadow">
+      <thead class="bg-gray-700 text-gray-300 text-left">
+        <tr>
+          <th class="px-4 py-3">#</th>
+          <th class="px-4 py-3">User</th>
+          <th class="px-4 py-3">Amount</th>
+          <th class="px-4 py-3">Method</th>
+          <th class="px-4 py-3">Wallet Address</th>
+          <th class="px-4 py-3">Transaction ID</th>
+          <th class="px-4 py-3">Status</th>
+          <th class="px-4 py-3">Proof</th>
+          <th class="px-4 py-3">Date</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-600">
+        {% for deposit in page %}
+        <tr>
+          <td class="px-4 py-3">{{ forloop.counter }}</td>
+          <td class="px-4 py-3">{{ deposit.user.username }}</td>
+          <td class="px-4 py-3">${{ deposit.amount }}</td>
+          <td class="px-4 py-3">{{ deposit.payment_method }}</td>
+          <td class="px-4 py-3 text-sm">{{ deposit.wallet_address }}</td>
+          <td class="px-4 py-3 text-sm">{{ deposit.transaction_id }}</td>
+          <td class="px-4 py-3">
             {% if deposit.is_approved %}
-                <span class="deposit-status approved-status ms-sm-auto">✅ Approved</span>
+              <span class="text-green-400 font-semibold">✅ Approved</span>
             {% else %}
-                <span class="deposit-status pending-status ms-sm-auto">⏳ Pending</span>
+              <span class="text-yellow-400 font-semibold">⏳ Pending</span>
             {% endif %}
-        </div>
-        <div>
-          <img src="{{ deposit.payment_proof.url }}" alt="Proof Image"
-               class="proof-thumbnail"
-               data-bs-toggle="modal"
-               data-bs-target="#proofModal"
-               data-img="{{ deposit.payment_proof.url }}">
-        </div>
-      </div>
-    </div>
-  {% empty %}
-    <p class="text-center text-muted">No deposits found.</p>
-  {% endfor %}
+          </td>
+          <td class="px-4 py-3">
+            <button @click="open = {{ deposit.id }}" class="bg-blue-600 hover:bg-blue-700 text-white py-1 px-2 rounded text-xs">View</button>
+
+            <!-- Modal -->
+            <div x-data="{ open: false }" x-show="open === {{ deposit.id }}" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70">
+              <div class="bg-gray-800 rounded-lg overflow-hidden shadow-xl w-72">
+                <div class="flex justify-between items-center px-4 py-2 bg-gray-700">
+                  <h3 class="text-sm font-medium">Payment Proof</h3>
+                  <button @click="open = false" class="text-gray-400 hover:text-white">&times;</button>
+                </div>
+                <div class="p-4">
+                  <img src="{{ deposit.payment_proof.url }}" alt="Proof for {{ deposit.user.username }}" class="w-full rounded shadow">
+                </div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-sm">{{ deposit.created_at|date:"d M Y, h:i A" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="px-4 py-4 text-center text-gray-400">No deposits found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
   <!-- Pagination -->
-  <nav class="mt-4">
-    <ul class="pagination justify-content-center">
-      {% if deposits.has_previous %}
-        <li class="page-item"><a class="page-link" href="?search={{ search_query }}&page={{ deposits.previous_page_number }}">Previous</a></li>
+  {% if page.has_other_pages %}
+  <div class="mt-6 flex justify-center space-x-1">
+    {% if page.has_previous %}
+    <a href="?page={{ page.previous_page_number }}" class="px-3 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded">&laquo;</a>
+    {% endif %}
+
+    {% for num in page.paginator.page_range %}
+      {% if page.number == num %}
+        <span class="px-3 py-1 bg-blue-600 text-white rounded">{{ num }}</span>
       {% else %}
-        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <a href="?page={{ num }}" class="px-3 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded">{{ num }}</a>
       {% endif %}
+    {% endfor %}
 
-      {% for num in deposits.paginator.page_range %}
-        {% if deposits.number == num %}
-          <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-        {% elif num > deposits.number|add:-2 and num < deposits.number|add:2 %}
-          <li class="page-item"><a class="page-link" href="?search={{ search_query }}&page={{ num }}">{{ num }}</a></li>
-        {% endif %}
-      {% endfor %}
-
-      {% if deposits.has_next %}
-        <li class="page-item"><a class="page-link" href="?search={{ search_query }}&page={{ deposits.next_page_number }}">Next</a></li>
-      {% else %}
-        <li class="page-item disabled"><span class="page-link">Next</span></li>
-      {% endif %}
-    </ul>
-  </nav>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="proofModal" tabindex="-1" aria-labelledby="proofModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content bg-dark text-white">
-      <div class="modal-header border-0">
-        <h5 class="modal-title" id="proofModalLabel">Payment Proof</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img src="" id="modalImage" class="img-fluid rounded shadow" alt="Full Proof">
-      </div>
-    </div>
+    {% if page.has_next %}
+    <a href="?page={{ page.next_page_number }}" class="px-3 py-1 bg-gray-700 text-white hover:bg-gray-600 rounded">&raquo;</a>
+    {% endif %}
   </div>
+  {% endif %}
 </div>
 
-<!-- Bootstrap & Modal Script -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const modal = document.getElementById('proofModal');
-  modal.addEventListener('show.bs.modal', function (event) {
-    const trigger = event.relatedTarget;
-    const imgSrc = trigger.getAttribute('data-img');
-    document.getElementById('modalImage').src = imgSrc;
-  });
-</script>
-
-</body>
-</html>
-
+<!-- Alpine.js -->
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 {% endblock %}

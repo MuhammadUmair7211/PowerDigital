@@ -51,16 +51,8 @@
 			}
 
 			.container {
-				max-width: 800px;
-				margin: 0 auto;
+				max-width: 1000px;
 				padding: 30px 20px;
-			}
-
-			.card {
-				background-color: #1e293b;
-				border-radius: 15px;
-				padding: 30px;
-				box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 			}
 
 			.user-info {
@@ -175,71 +167,69 @@
 	</head>
 	<body>
 		<!-- Back Button -->
-		<div class="back-button">
-			<a href="javascript:history.back()">
-				<svg
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						d="M15 19l-7-7 7-7"
-					></path>
-				</svg>
-				<span>Back</span>
-			</a>
-		</div>
 
 		<!-- Main Content -->
-		<div class="container">
-			<div class="card">
-				<!-- User Info -->
-				<div class="user-info">
-					<h2 style="color: white">
-						👤 {{ user.username }} {% if is_verified %}
-						<span class="verified-tag">Verified</span>
-						{% endif %}
-					</h2>
-					<p>{{ user.email }}</p>
-
-					<ul class="invite-list">
-						{% for i in pro %}
-						<li class="invite-item" style="color: white">
-							🎟️ Invite Code - {{ i.invite_code }}
-						</li>
-						{% endfor %}
-					</ul>
-				</div>
-
-				<!-- Navigation -->
-				<nav class="nav">
-					{% block translate_selector %}
-					<div
-						id="google_translate_element"
-						class="fixed top-4 right-4 z-50"
-					></div>
-					{% endblock %}
-
-					<a href="{% url 'verify_identity' %}">🧾 Real Name Authentication</a>
-					<a href="{% url 'reset_password' %}">🔐 Reset Login Password</a>
-					<a href="{% url 'bank_detail' %}">💳 Bind Bank Card</a>
-					<a href="{% url 'withdrawal_success' %}"
-						>🏦 Manage Withdrawal Address</a
+		<div class="container mt-16">
+			<div class="back-button">
+				<a href="javascript:history.back()">
+					<svg
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						viewBox="0 0 24 24"
+						xmlns="http://www.w3.org/2000/svg"
 					>
-					<a href="{% url 'set_withdrawal_password' %}"
-						>🔑 Change Withdrawal Password</a
-					>
-					<a href="{% url 'support_page' %}" class="text-indigo-600"
-						>💬 User Support</a
-					>
-
-					<a href="{% url 'login' %}" class="logout">🚪 Logout</a>
-				</nav>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M15 19l-7-7 7-7"
+						></path>
+					</svg>
+					<span>Back</span>
+				</a>
 			</div>
+			<!-- User Info -->
+			<div class="user-info">
+				<h2 style="color: white">
+					👤 {{ user.username }} {% if is_verified %}
+					<span class="verified-tag">Verified</span>
+					{% endif %}
+				</h2>
+				<p>{{ user.email }}</p>
+
+				<ul class="invite-list">
+					{% for i in pro %}
+					<li class="invite-item" style="color: white">
+						🎟️ Invite Code - {{ i.invite_code }}
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+
+			<!-- Navigation -->
+			<nav class="nav">
+				{% block translate_selector %}
+				<div
+					id="google_translate_element"
+					class="fixed top-4 right-4 z-50"
+				></div>
+				{% endblock %}
+
+				<a href="{% url 'verify_identity' %}">🧾 Real Name Authentication</a>
+				<a href="{% url 'reset_password' %}">🔐 Reset Login Password</a>
+				<a href="{% url 'bank_detail' %}">💳 Bind Bank Card</a>
+				<a href="{% url 'withdrawal_success' %}"
+					>🏦 Manage Withdrawal Address</a
+				>
+				<a href="{% url 'set_withdrawal_password' %}"
+					>🔑 Change Withdrawal Password</a
+				>
+				<a href="{% url 'support_page' %}" class="text-indigo-600"
+					>💬 User Support</a
+				>
+
+				<a href="{% url 'login' %}" class="logout">🚪 Logout</a>
+			</nav>
 		</div>
 	</body>
 </html>
