@@ -204,6 +204,7 @@ def place_trade(request):
 
 
 
+
 def submit_order(request):
     if request.method == "POST":
         form = TradeOrderForm(request.POST)
@@ -261,6 +262,50 @@ def profile(request):
     })
 
 
+
+from decimal import Decimal
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib.auth.decorators import login_required
+from .models import TradeOrder, Profile  # Adjust import if needed
+
+@login_required
+def admin_manage_trades(request):
+    if request.method == "POST":
+        trade_id = request.POST.get("trade_id")
+        action = request.POST.get("action")
+
+        trade = get_object_or_404(TradeOrder, id=trade_id)
+
+        if trade.is_closed:
+            messages.warning(request, "Trade already closed.")
+            return redirect("manage_trades")
+
+        profile = Profile.objects.get(user=trade.user)
+
+        if action == "profit":
+            # Set profit amount (e.g., 80% of trade amount)
+            trade.manual_profit = trade.amount * Decimal("0.80")
+            trade.yield_percent = (trade.manual_profit / trade.amount) * Decimal("100")
+            
+            # Update user balance
+            profile.total_profit += trade.manual_profit
+            profile.save()
+
+            messages.success(request, "Marked as profit and balance updated.")
+
+        elif action == "loss":
+            trade.manual_profit = Decimal("0.00")
+            trade.yield_percent = Decimal("0.00")
+            messages.info(request, "Marked as loss.")
+
+        trade.is_closed = True
+        trade.save()
+
+        return redirect("admin_manage_trades")
+
+    trades = TradeOrder.objects.all().order_by("-id")
+    return render(request, "admins/manage_trades.html", {"trades": trades})
 
 
 @login_required

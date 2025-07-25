@@ -34,9 +34,8 @@ urlpatterns = [
 
 
 
-
+    path('ad/manage_trades/', views.admin_manage_trades, name='admin_manage_trades'),
     path('ad/dashboard/', views.admin_dashboard, name='admin_dashboard'),
-    path('ad/trades/', views.trade_review_admin, name='admin_trades'),
     path('ad/deposits/', views.admin_deposit_list, name='admin_deposits'),
     path('ad/deposit/approve/<int:deposit_id>/', views.approve_deposit, name='approve_deposit'),
     path('ad/loginx/z1z2', views.admin_login_view, name='admin_login'),

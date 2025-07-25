@@ -4,7 +4,7 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password, check_password
-
+from decimal import Decimal
 
 class TradeOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -21,7 +21,7 @@ class TradeOrder(models.Model):
     manual_profit = models.DecimalField(max_digits=20, decimal_places=8, default=0)
     @property
     def single_trade(self):
-        return (self.yield_percent or 0) + (self.manual_profit or 0)
+        return (self.potential_profit or Decimal('0')) + (self.manual_profit or Decimal('0'))
 
 
 
