@@ -1,229 +1,92 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Your Deposits</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #0f172a;
-      color: #e2e8f0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Your Deposits</title>
+    <link
+			rel="icon"
+			type="image/svg+xml"
+			href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 151 174" fill="%23d32f2f"><path d="M74.5 4.5h27.1l-17.4 55.8h22.6L74.8 148.6l4.7-44.5H57.6l17.1-44.5H57.4L74.5 4.5z"/><path d="M75.5 0C34.1 0 0 34.1 0 75.5S34.1 151 75.5 151c41.3 0 75.5-34.1 75.5-75.5 0-21.7-9-41.3-23.5-55.1l-7.5 23.1c9.8 9.9 15.8 23.6 15.8 38.6 0 30.3-24.6 54.9-54.9 54.9S26.1 112.9 26.1 82.6 50.7 27.7 81 27.7l4.5-13.8C82.7 11.1 79.2 10.3 75.5 10.3z"/></svg>'
+		/>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-slate-900 text-slate-200 font-sans">
 
-    .deposit-container {
-      max-width: 900px;
-      margin: auto;
-      background-color: #1e293b;
-      padding: 20px;
-      border-radius: 16px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.4);
-    }
-
-    .deposit-header {
-      text-align: center;
-      color: #38bdf8;
-      margin-bottom: 20px;
-    }
-
-    .deposit-card {
-      background-color: #0f172a;
-      border: 1px solid #334155;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      padding: 16px;
-      transition: background-color 0.3s ease;
-    }
-
-    .deposit-card:hover {
-      background-color: #162033;
-    }
-
-    .deposit-info span {
-      font-size: 0.95rem;
-      display: block;
-    }
-
-    .deposit-status {
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-
-    .approved-status {
-      color: #10b981;
-    }
-
-    .pending-status {
-      color: #fbbf24;
-    }
-
-    .proof-thumbnail {
-      width: 100%;
-      max-width: 100px;
-      height: auto;
-      border-radius: 8px;
-      border: 1px solid #334155;
-      cursor: pointer;
-      transition: transform 0.2s;
-    }
-
-    .proof-thumbnail:hover {
-      transform: scale(1.05);
-    }
-
-    .form-control {
-      background-color: #0f172a;
-      color: #e2e8f0;
-      border: 1px solid #334155;
-    }
-
-    .form-control::placeholder {
-      color: #94a3b8;
-    }
-
-    .btn-primary {
-      background-color: #3b82f6;
-      border: none;
-    }
-
-    .btn-primary:hover {
-      background-color: #2563eb;
-    }
-
-    .pagination .page-link {
-      background-color: #1e293b;
-      color: #e2e8f0;
-      border: 1px solid #334155;
-    }
-
-    .pagination .page-item.active .page-link {
-      background-color: #38bdf8;
-      border-color: #38bdf8;
-      color: #0f172a;
-    }
-
-    a.btn-add {
-      background-color: #305b8b;
-      color: white;
-      padding: 10px 16px;
-      text-decoration: none;
-      border-radius: 6px;
-      display: inline-block;
-    }
-
-    a.btn-add:hover {
-      background-color: #3b6da7;
-    }
-
-    @media (max-width: 576px) {
-      .deposit-header h3 {
-        font-size: 1.25rem;
-        text-align: center;
-        margin-left: 0 !important;
-      }
-
-      .proof-thumbnail {
-        max-width: 80px;
-      }
-    }
-  </style>
-</head>
-<body>
-
-<div class="container py-4">
-  <div class="deposit-container">
-
-    <!-- Header Row -->
-    <div class="d-flex flex-column flex-sm-row align-items-center justify-content-between mb-3">
-      <div class="d-flex align-items-center mb-2 mb-sm-0">
-        <a href="javascript:history.back()" class="me-2 text-white-50 text-decoration-none">
-          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-arrow-left" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
-          </svg>
+    <div class="max-w-7xl mx-auto px-4 py-6">
+      <!-- Header Row -->
+      <div class="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <div class="flex items-center gap-2 mb-4 sm:mb-0">
+          <a href="javascript:history.back()" class="text-slate-400 hover:text-white">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H3.707l3.147 3.146a.5.5 0 1 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L3.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+            </svg>
+          </a>
+          <h2 class="text-lg font-semibold">Your Deposits</h2>
+        </div>
+        <a href="{% url 'deposit_create' %}" class="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded-md shadow">
+          + Add
         </a>
-        <h4 class="mb-0 ms-2">Your Deposits</h4>
       </div>
-      <a href="{% url 'deposit_create' %}" class="btn-add">+ Add</a>
-    </div>
 
-    <!-- Deposit Cards -->
-    {% for deposit in deposits %}
-      <div class="deposit-card">
-        <div class="d-flex flex-column flex-sm-row align-items-start justify-content-between gap-3">
-          <div class="deposit-info d-flex flex-column flex-sm-row flex-wrap align-items-sm-center gap-3 w-100">
+      <!-- Deposit Cards -->
+      {% for deposit in deposits %}
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 mb-4 hover:bg-slate-700 transition">
+        <div class="flex flex-col sm:flex-row justify-between items-start gap-4">
+          <div class="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 w-full">
             <span><strong>User:</strong> {{ deposit.user.username }}</span>
             <span><strong>{{ deposit.currency }}</strong> - {{ deposit.amount }}</span>
             {% if deposit.is_approved %}
-              <span class="deposit-status approved-status ms-sm-auto">✅ Approved</span>
+            <span class="text-green-400 font-semibold ml-auto">✅ Approved</span>
             {% else %}
-              <span class="deposit-status pending-status ms-sm-auto">⏳ Pending</span>
+            <span class="text-yellow-400 font-semibold ml-auto">⏳ Pending</span>
             {% endif %}
           </div>
-          <div class="mt-2 mt-sm-0">
-            <img src="{{ deposit.payment_proof.url }}" alt="Proof" class="proof-thumbnail"
-                 data-bs-toggle="modal" data-bs-target="#proofModal" data-img="{{ deposit.payment_proof.url }}">
+          <div class="mt-2 sm:mt-0">
+            <img
+              src="{{ deposit.payment_proof.url }}"
+              alt="Proof"
+              class="w-24 h-auto rounded-lg border border-slate-600 cursor-pointer hover:scale-105 transition-transform"
+              data-modal-target="proofModal"
+              data-img="{{ deposit.payment_proof.url }}"
+            />
           </div>
         </div>
       </div>
-    {% empty %}
-      <p class="text-center text-muted">No deposits found.</p>
-    {% endfor %}
+      {% empty %}
+      <p class="text-center text-slate-500">No deposits found.</p>
+      {% endfor %}
 
-    <!-- Pagination -->
-    <nav class="mt-4">
-      <ul class="pagination justify-content-center">
+      <!-- Pagination -->
+      <div class="mt-6 flex justify-center space-x-2">
         {% if deposits.has_previous %}
-          <li class="page-item"><a class="page-link" href="?search={{ search_query }}&page={{ deposits.previous_page_number }}">Previous</a></li>
+        <a href="?search={{ search_query }}&page={{ deposits.previous_page_number }}" class="px-3 py-1 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200">Previous</a>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        <span class="px-3 py-1 rounded border border-slate-700 bg-slate-900 text-slate-500 cursor-not-allowed">Previous</span>
         {% endif %}
 
         {% for num in deposits.paginator.page_range %}
           {% if deposits.number == num %}
-            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          <span class="px-3 py-1 rounded border border-blue-500 bg-blue-500 text-white font-medium">{{ num }}</span>
           {% elif num > deposits.number|add:'-2' and num < deposits.number|add:'2' %}
-            <li class="page-item"><a class="page-link" href="?search={{ search_query }}&page={{ num }}">{{ num }}</a></li>
+          <a href="?search={{ search_query }}&page={{ num }}" class="px-3 py-1 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200">{{ num }}</a>
           {% endif %}
         {% endfor %}
 
         {% if deposits.has_next %}
-          <li class="page-item"><a class="page-link" href="?search={{ search_query }}&page={{ deposits.next_page_number }}">Next</a></li>
+        <a href="?search={{ search_query }}&page={{ deposits.next_page_number }}" class="px-3 py-1 rounded border border-slate-700 bg-slate-800 hover:bg-slate-700 text-slate-200">Next</a>
         {% else %}
-          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        <span class="px-3 py-1 rounded border border-slate-700 bg-slate-900 text-slate-500 cursor-not-allowed">Next</span>
         {% endif %}
-      </ul>
-    </nav>
-  </div>
-</div>
-
-<!-- Modal -->
-<div class="modal fade" id="proofModal" tabindex="-1" aria-labelledby="proofModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content bg-dark text-white">
-      <div class="modal-header border-0">
-        <h5 class="modal-title" id="proofModalLabel">Payment Proof</h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body text-center">
-        <img src="" id="modalImage" class="img-fluid rounded shadow" alt="Full Proof">
       </div>
     </div>
-  </div>
-</div>
 
-<!-- Script -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-  const modal = document.getElementById('proofModal');
-  modal.addEventListener('show.bs.modal', function (event) {
-    const trigger = event.relatedTarget;
-    const imgSrc = trigger.getAttribute('data-img');
-    document.getElementById('modalImage').src = imgSrc;
-  });
-</script>
-
-</body>
-</html>
-
-
+    <!-- Modal -->
+    <div id="proofModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+      <div class="bg-slate-900 rounded-lg p-4 max-w-2xl w-full shadow-lg">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold">Payment Proof</h2>
+          <button onclick="closeModal()" class="text-slate-300 hover:text-white">&times;</button>
+        </div>
+        <div class="text-center">
+          <i

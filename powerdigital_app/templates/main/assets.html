@@ -120,8 +120,8 @@
 		<div class="max-w-">
 			{% if request.user.is_authenticated %}
 				<div class="p-4 bg-gray-900 text-white rounded-lg shadow-md">
-					<h2 class="text-xl md:text-3xl font-bold mb-2">💼 Account Summary</h2>
-					<p class="text-green-500 text-xl my-2 md:text-2xl"><strong>Account Balance:</strong> 
+					<h2 class="text-xl md:text-3xl font-bold mb-2">Account Summary</h2>
+					<p class="text-green-500 text-xl my-2 md:text-2xl"><strong> Balance:</strong> 
 						${{ total_balance }}</p>
 					<p class="text-blue-500"><strong> Deposit:</strong> ${{ total_deposit }}</p>
 					<p class="text-yellow-500"><strong> Profit:</strong> ${{ total_profit }}</p>
@@ -143,8 +143,10 @@
 						<th>Direction</th>
 						<th>Amount (USDT)</th>
 						<th>Expiry (s)</th>
-						<th>Profit/Loss</th>
+						<th>Value</th>
+						<th>Status</th>
 						<th>Created At</th>
+						<th>Clear Trade</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -153,15 +155,38 @@
 						<td>{{ trade.pair }}</td>
 						<td>
 							{% if trade.direction == 'Buy Up' %}
-							<span class="text-green">📈 Buy Up</span>
+							<span class="text-green-500">📈 Buy Up</span>
 							{% else %}
-							<span class="text-red">📉 Buy Down</span>
+							<span class="text-red-500">📉 Buy Down</span>
 							{% endif %}
 						</td>
-						<td>${{ trade.amount }}</td>
+						<td>${{ trade.amount|floatformat:2 }}</td>
 						<td>{{ trade.expiry_time }} sec</td>
-						<td>{{ trade.single_trade | floatformat:"2" }}</td>
+                        <td>
+                         {% if trade.result == "profit" %}
+                           <span class="text-green-500">+${{ trade.manual_profit|floatformat:2 }}</span>
+                         {% elif trade.result == "loss" %}
+                           <span class="text-red-500">-${{ trade.amount|floatformat:2 }}</span>
+                         {% endif %}
+                       </td>
+
+					    <td>
+                         {% if trade.result == "profit" %}
+                          <span class="text-green-500">Profit</span>
+                         {% else %}
+                        <span class="text-red-500">Loss</span>
+                         {% endif %}
+                       </td>
+					   
 						<td>{{ trade.created_at|date:"Y-m-d H:i:s" }}</td>
+						<td>
+							<form method="POST" action="{% url 'delete_trade' trade.id %}" onsubmit="return confirm('Are you sure you want to delete this trade?');">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700">
+                        Delete
+                    </button>
+                </form>
+						</td>
 					</tr>
 					{% endfor %}
 				</tbody>

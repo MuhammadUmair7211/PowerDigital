@@ -124,67 +124,82 @@ def get_profit_percentage(expiry_time):
 
 
 
-
-
 @login_required
 @transaction.atomic
 def place_trade(request):
     if request.method == "POST":
-        pair = request.POST.get('trading_pair')
+        trading_pair = request.POST.get("trading_pair")
         direction = request.POST.get('direction')  # "up" or "down"
+
+        # Handle amount input
         try:
             amount = Decimal(request.POST.get('custom_amount') or "0")
         except Exception:
             return JsonResponse({'success': False, 'error': 'Invalid amount.'})
+
+        # Handle expiry input
         try:
-            expiry_time = int(request.POST.get('expiry_time') or 0)
+            expiry_time = int(request.POST.get("expiry_time") or 0)
         except Exception:
             return JsonResponse({'success': False, 'error': 'Invalid expiry time.'})
 
+        # Fetch current price
+        try:
+            res = requests.get(f"https://api.binance.com/api/v3/ticker/price?symbol={trading_pair}")
+            res.raise_for_status()
+            locked_price = Decimal(res.json()['price'])  # ✅ Use Decimal not float
+        except Exception as e:
+            return JsonResponse({"success": False, "error": "Failed to fetch price"})
+
+        # Validate trade inputs
         if amount <= 0 or expiry_time <= 0 or direction not in ["up", "down"]:
             return JsonResponse({'success': False, 'error': 'Invalid trade data.'})
 
         profile = Profile.objects.select_for_update().get(user=request.user)
         total_balance = profile.total_balance
 
+        # Check if user has enough balance
         if total_balance < amount:
             return JsonResponse({'success': False, 'error': 'Insufficient balance'})
 
-        # Deduct balance in order: credit → deposit → profit
+        # Deduct funds in order: credit → deposit → profit
         remaining = amount
 
-        if profile.credit >= remaining:
-            profile.credit -= remaining
-            remaining = 0
-        else:
-            remaining -= profile.credit
-            profile.credit = 0
+        # First: Deduct from deposit
+        if remaining > 0:
+            if profile.total_deposit >= remaining:
+                profile.total_deposit -= remaining
+                remaining = 0
+            else:
+                remaining -= profile.total_deposit
+                profile.total_deposit = 0
 
-        if remaining > 0 and profile.total_deposit >= remaining:
-            profile.total_deposit -= remaining
-            remaining = 0
-        elif remaining > 0:
-            remainder = remaining
-            if profile.total_profit >= remainder:
-                profile.total_profit -= remainder
+        # Then: Deduct remaining from profit
+        if remaining > 0:
+            if profile.total_profit >= remaining:
+                profile.total_profit -= remaining
                 remaining = 0
             else:
                 return JsonResponse({'success': False, 'error': 'Not enough funds in deposit or profit'})
 
         profile.save()
 
+        # Calculate profit values
         profit_percent = get_profit_percentage(expiry_time)
         potential_profit = round(amount * profit_percent, 2)
+        yield_percent = profit_percent * 100  # Convert 0.3 → 30.0
 
-        # Save trade order
+        # ✅ Save trade order
         trade = TradeOrder.objects.create(
             user=request.user,
-            pair=pair,
-            direction="Buy Up" if direction == "up" else "Buy Down",
+            pair=trading_pair,
+            direction=direction,  # ✅ Keep as "up"/"down"
             amount=amount,
             expiry_time=expiry_time,
             balance=total_balance,
             potential_profit=potential_profit,
+            yield_percent=yield_percent,
+            entry_price=locked_price,
             expires_at=timezone.now() + timedelta(seconds=expiry_time),
             is_closed=False
         )
@@ -193,13 +208,15 @@ def place_trade(request):
             'success': True,
             'trade_id': trade.id,
             'expires_at': trade.expires_at.strftime('%Y-%m-%d %H:%M:%S'),
+            'trade_end_timestamp': int(trade.expires_at.timestamp()),  # 🆕 optional
             'profit_added': str(potential_profit)
         })
 
+    # Only GET request reaches here, no access to 'remaining'
     return render(request, "main/contract.html", {
-    'expiry_options': [60, 120, 180, 300, 360],
-    'quick_amounts': [10, 25, 50, 100, 250, 500, 1000],
-})
+        'expiry_options': [60, 120, 180, 300, 360],
+        'quick_amounts': [10, 25, 50, 100, 250, 500, 1000],
+    })
 
 
 
@@ -220,6 +237,10 @@ def submit_order(request):
 
 
 
+
+
+
+
 @login_required
 def user_trades(request):  
     if request.user.is_staff or request.user.is_superuser:
@@ -227,25 +248,49 @@ def user_trades(request):
     
     trades = TradeOrder.objects.filter(user=request.user).order_by('-created_at')
     profile, _ = Profile.objects.get_or_create(user=request.user)
-  
-    total_profit = profile.total_profit
-    total_credit = profile.credit
-    total_deposit = profile.total_deposit 
-    total_balance = total_deposit + total_profit
+    total_profit = round(profile.total_profit, 2)
+    total_deposit = round(profile.total_deposit, 2)
+    total_balance = round(profile.total_balance, 2)  # from @property
 
-    # Pagination setup (10 trades per page)
     paginator = Paginator(trades, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
     return render(request, "main/assets.html", {
-        "user_trades": page_obj,  # ✅ Paginated trades
+        "user_trades": page_obj,
         "total_deposit": total_deposit,
         "total_profit": total_profit,
         "total_balance": total_balance,
-        "credit": total_credit,
+        "credit": profile.credit,
         "page_obj": page_obj,
     })
+
+
+
+
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from .models import TradeOrder
+
+@login_required
+def delete_trade(request, trade_id):
+    trade = get_object_or_404(TradeOrder, id=trade_id, user=request.user)
+
+    if request.method == "POST":
+        trade.delete()
+    
+    return redirect('user_trades')  # or another relevant page
+
+
+
+
+
+
+
 
 
 @login_required
@@ -262,50 +307,69 @@ def profile(request):
     })
 
 
-
 from decimal import Decimal
 from django.contrib import messages
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
-from .models import TradeOrder, Profile  # Adjust import if needed
+from .models import TradeOrder, Profile
 
 @login_required
 def admin_manage_trades(request):
+    if not request.user.is_staff:
+        return redirect('home')
+
+    search_query = request.GET.get("q", "").strip()
+
     if request.method == "POST":
+        # Handle delete
+        if 'delete_trade_id' in request.POST:
+            trade_id = request.POST.get("delete_trade_id")
+            trade = get_object_or_404(TradeOrder, id=trade_id)
+            trade.delete()
+            messages.success(request, f"Trade #{trade_id} deleted.")
+            return redirect('admin_manage_trades')
+
+        # Handle profit/loss marking
         trade_id = request.POST.get("trade_id")
         action = request.POST.get("action")
 
+        if not trade_id or action not in ["profit", "loss"]:
+            messages.error(request, "Invalid action.")
+            return redirect('admin_manage_trades')
+
         trade = get_object_or_404(TradeOrder, id=trade_id)
+        profile = get_object_or_404(Profile, user=trade.user)
 
-        if trade.is_closed:
-            messages.warning(request, "Trade already closed.")
-            return redirect("manage_trades")
+        # Revert any previous result effect on user's balance
+        if trade.result == "profit":
+            profile.total_profit -= trade.amount + trade.manual_profit
+        elif trade.result == "loss":
+            pass  # Nothing to subtract for a loss
 
-        profile = Profile.objects.get(user=trade.user)
-
+        # Apply new result
         if action == "profit":
-            # Set profit amount (e.g., 80% of trade amount)
-            trade.manual_profit = trade.amount * Decimal("0.80")
-            trade.yield_percent = (trade.manual_profit / trade.amount) * Decimal("100")
-            
-            # Update user balance
-            profile.total_profit += trade.manual_profit
-            profile.save()
-
-            messages.success(request, "Marked as profit and balance updated.")
-
+            profit = (trade.amount * trade.yield_percent) / 100
+            trade.manual_profit = profit
+            profile.total_profit += profit
+            trade.result = "profit"
         elif action == "loss":
-            trade.manual_profit = Decimal("0.00")
-            trade.yield_percent = Decimal("0.00")
-            messages.info(request, "Marked as loss.")
+            trade.manual_profit = Decimal('0.00')
+            trade.yield_percent = Decimal('0.00')
+            trade.result = "loss"
 
         trade.is_closed = True
         trade.save()
+        profile.save()
 
-        return redirect("admin_manage_trades")
+        messages.success(request, f"Trade #{trade_id} marked as {action.upper()}.")
+        return redirect('admin_manage_trades')
 
-    trades = TradeOrder.objects.all().order_by("-id")
-    return render(request, "admins/manage_trades.html", {"trades": trades})
+    trades = TradeOrder.objects.all().order_by('-created_at')
+    
+    if search_query:
+        trades = trades.filter(Q(user__username__icontains=search_query))
+    return render(request, "admins/manage_trades.html", {"trades": trades, "search_query":search_query})
+
 
 
 @login_required
@@ -533,38 +597,147 @@ def set_withdrawal_password(request):
 
 
 
+
+
+
 def real_market(request):
     return render(request , 'main/market.html')
 
 
 
 
+
+
+from decimal import Decimal
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+from .models import TradeOrder, Profile
+
+@transaction.atomic
 def mark_trade_result(request, trade_id, outcome):
     trade = get_object_or_404(TradeOrder, id=trade_id)
+    profile = trade.user.profile
 
+    # ✅ Exit early if already handled
     if trade.result_handled:
-        messages.warning(request, "Trade already processed.")
-        return redirect('admin_trades')
+        messages.warning(request, "This trade was already handled.")
+        return redirect('admin_manage_trades')
 
-    if outcome not in ['win', 'loss']:
-        messages.error(request, "Invalid result.")
-        return redirect('admin_trades')
+    # ✅ Revert previous automatic result
+    if trade.actual_result == "profit":
+        reversal = trade.amount + trade.manual_profit
+        profile.account_balance -= reversal
+        profile.total_profit -= trade.manual_profit
+    elif trade.actual_result == "loss":
+        profile.account_balance += trade.amount  # refund amount lost
 
-    trade.result = outcome
+    # ✅ Apply admin override
+    if outcome == "profit":
+        profit = (trade.amount * trade.yield_percent) / 100
+        profile.account_balance += trade.amount + profit
+        profile.total_profit += profit
+        trade.result = "profit"
+        trade.manual_profit = profit
+    elif outcome == "loss":
+        profile.account_balance -= trade.amount
+        trade.result = "loss"
+        trade.manual_profit = Decimal('0.00')
+        trade.yield_percent = Decimal('0.00')
+
     trade.result_handled = True
-    trade.is_closed = True
+    profile.save()
     trade.save()
 
-    profile, _ = Profile.objects.get_or_create(user=trade.user)
+    messages.success(request, f"Trade marked as {outcome}.")
+    return redirect("admin_manage_trades")
 
-    if outcome == 'win':
-        profile.total_profit += trade.potential_profit  # ✅ CORRECT
-    # If loss, do nothing (amount already deducted at order placement)
 
+
+
+
+
+
+
+from decimal import Decimal
+import requests
+from django.utils import timezone
+
+def get_current_price(pair):
+    try:
+        symbol = pair.replace("/", "")  # e.g. BTC/USDT → BTCUSDT
+        res = requests.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
+        res.raise_for_status()
+        return Decimal(res.json()['price'])
+    except Exception as e:
+        print(f"Error fetching price for {pair}: {e}")
+        return None
+
+
+
+
+
+
+from decimal import Decimal
+from .models import TradeOrder, Profile
+
+def handle_trade_expiry(trade):
+    if trade.is_closed:
+        return  # Prevent reprocessing
+
+    profile = trade.user.profile
+
+    # Prices
+    entry_price = trade.entry_price
+    expiry_price = get_current_price(trade.pair)
+    direction = trade.direction
+
+    # Save exit price
+    trade.exit_price = expiry_price
+
+    # Determine result
+    if (direction == "up" and expiry_price > entry_price) or (direction == "down" and expiry_price < entry_price):
+        result = "profit"
+        profit = (trade.amount * trade.yield_percent) / 100
+        total_profit = trade.amount + profit
+
+        # ✅ Update fields on profit
+        profile.total_profit += total_profit
+        trade.manual_profit = profit
+    else:
+        result = "loss"
+    trade.result = result
     profile.save()
+    trade.save()
 
-    messages.success(request, f"Marked trade as {outcome} and updated balance.")
-    return redirect('admin_trades')
+
+
+
+
+
+
+
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from .models import TradeOrder
+
+@login_required
+def check_trade_result(request, trade_id):
+    trade = get_object_or_404(TradeOrder, id=trade_id, user=request.user)
+    handle_trade_expiry(trade)
+    return JsonResponse({
+        'success': True,
+        'result': trade.result,
+        'profit': str(trade.manual_profit),
+        'amount': str(trade.amount),
+        'entry_price': str(trade.entry_price),
+        'exit_price': str(trade.exit_price),
+    })
+
+
+
+
+
 
 
 
@@ -606,30 +779,44 @@ def trade_review_admin(request):
 
 
 
+@login_required
+@transaction.atomic
 def mark_trade_result(request, trade_id, outcome):
     trade = get_object_or_404(TradeOrder, id=trade_id)
+    profile = trade.user.profile
 
+    # ✅ Step 1: Revert previous result if already handled
     if trade.result_handled:
-        messages.warning(request, "Trade already processed.")
-        return redirect('admin_trades')
+        if trade.result == "profit":
+            # Remove previously added profit and amount
+            profile.total_profit -= trade.manual_profit
 
-    if outcome not in ['win', 'loss']:
-        messages.error(request, "Invalid result.")
-        return redirect('admin_trades')
+        elif trade.result == "loss":
+            pass
 
-    trade.result = outcome
+    # ✅ Step 2: Apply new result
+    if outcome == "profit":
+        profit = (trade.amount * trade.yield_percent) / 100
+        profile.total_balance += trade.amount + profit
+        profile.total_profit += profit
+        trade.result = "profit"
+        trade.manual_profit = profit
+
+    elif outcome == "loss":
+        # Do NOT deduct amount again — it was already deducted at trade placement
+        trade.result = "loss"
+        trade.manual_profit = Decimal('0.00')
+        trade.yield_percent = Decimal('0.00')
+
     trade.result_handled = True
+    profile.save()
     trade.save()
 
-    profile, _ = Profile.objects.get_or_create(user=trade.user)
-    if outcome == 'win':
-        profile.total_deposit += trade.amount
-    elif outcome == 'loss':
-        profile.total_deposit -= trade.amount
-    profile.save()
+    messages.success(request, f"Trade successfully marked as {outcome}.")
+    return redirect("admin_manage_trades")
 
-    messages.success(request, f"Marked trade as {outcome}.")
-    return redirect('admin_trades')
+
+
 
 
 
@@ -714,6 +901,10 @@ def admin_register_view(request):
         form = AdminRegisterForm()
 
     return render(request, 'admins/admin_register.html', {'form': form})
+
+
+
+
 
 
 @staff_member_required
@@ -809,6 +1000,9 @@ def update_trade_profit(request, trade_id):
     return redirect('admin_trades')
 
 
+
+
+
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator
 from django.contrib import messages
@@ -843,6 +1037,17 @@ def all_users_view(request):
             user.delete()
             messages.success(request, f"User '{username}' deleted successfully.")
             return redirect('all_users')
+        
+        elif action == "reset":
+            profile_id = request.POST.get("profile_id")
+            profile = get_object_or_404(Profile, id=profile_id)
+            profile.credit = 0
+            profile.total_profit = 0
+            profile.total_deposit = 0
+            profile.save()
+            messages.success(request, f"{profile.user.username}'s balance has been reset.")
+            return redirect('all_users')  # ✅ This line fixes the refresh issue
+
 
         elif action == 'update':
             updated_fields = []

@@ -16,6 +16,24 @@
 		class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 p-6 min-h-screen"
 	>
 		<h2 class="text-3xl font-bold mb-6 text-center">Manage Trades</h2>
+		<form
+			method="get"
+			class="my-6 max-w-3xl mx-auto w-full flex justify-center"
+		>
+			<input
+				type="text"
+				name="q"
+				placeholder="Search by username..."
+				value="{{ search_query }}"
+				class="px-4 py-2 w-full rounded-l border border-gray-300 outline-none text-black"
+			/>
+			<button
+				type="submit"
+				class="px-4 py-2 bg-blue-900 hover:bg-blue-800 duration-300 text-white rounded-r"
+			>
+				Search
+			</button>
+		</form>
 
 		<div class="overflow-x-auto rounded-lg shadow">
 			<table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -49,13 +67,24 @@
 						<th
 							class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
 						>
-							Manual Profit
+							Value
 						</th>
 						<th
 							class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
 						>
 							Status
 						</th>
+						<th
+							class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
+						>
+							Result
+						</th>
+						<th
+							class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
+						>
+							Created At
+						</th>
+
 						<th
 							class="px-4 py-3 text-left text-sm font-semibold text-gray-700 dark:text-gray-300"
 						>
@@ -71,14 +100,39 @@
 						<td class="px-4 py-3">{{ trade.user.username }}</td>
 						<td class="px-4 py-3">{{ trade.pair }}</td>
 						<td class="px-4 py-3 uppercase">
-							{% if trade.direction == "Buy Up" %} 🔼 Buy Up 
-                            {% elif trade.direction == "Buy Down" %} 🔽 Buy Down {% else %} 
-                            {{ trade.direction }} {% endif %}
+							{% if trade.direction == "up" %} 🔼 Buy Up 
+							{% elif trade.direction == "down" %} 🔽 Buy Down {% else %} 
+							{{ trade.direction }} {% endif %}
+						</td>
+						<td class="px-4 py-3">${{ trade.amount|floatformat:2}}</td>
+						<!-- Yield (%) -->
+						<td class="px-4 py-3">
+							{% if trade.result == "profit" %}
+							<span class="text-green-500 font-semibold"
+								>{{ trade.yield_percent }}%</span
+							>
+
+							{% elif trade.result == "loss" %}
+							<span class="text-red-500 text-sm">Loss</span>
+							{% else %}
+							<span class="text-yellow-500 text-sm"> Pending</span>
+							{% endif %}
 						</td>
 
-						<td class="px-4 py-3">{{ trade.amount }}</td>
-						<td class="px-4 py-3">{{ trade.yield_percent }}</td>
-						<td class="px-4 py-3">{{ trade.manual_profit }}</td>
+						<td class="px-4 py-3">
+							{% if trade.result == 'profit' %}
+							<span class="text-green-500 text-sm"
+								>+${{ trade.manual_profit|floatformat:2 }}</span
+							>
+							{% elif trade.result == 'loss' %}
+							<span class="text-red-500 text-sm"
+								>-${{ trade.amount|floatformat:2 }}</span
+							>
+							{% else %}
+							<span class="text-yellow-500 text-sm">Pending</span>
+							{% endif %}
+						</td>
+
 						<td class="px-4 py-3">
 							{% if trade.is_closed %}
 							<span class="text-red-500 font-medium">Closed</span>
@@ -87,36 +141,63 @@
 							{% endif %}
 						</td>
 						<td class="px-4 py-3">
+							{% if trade.result == 'profit' %}
+							<span class="text-green-500 text-sm">Profit</span>
+							{% elif trade.result == 'loss' %}
+							<span class="text-red-500 text-sm">Loss</span>
+							{% else %}
+							<span class="text-yellow-500 text-sm">Pending</span>
+							{% endif %}
+						</td>
+						<td class="px-4 py-3">{{ trade.created_at|date:"Y-m-d H:i:s" }}</td>
+
+						<td class="px-4 py-3 space-y-1">
 							{% if not trade.is_closed %}
-							<form method="POST" class="flex gap-2">
+							<form method="POST" class="flex items-center gap-2">
 								{% csrf_token %}
 								<input type="hidden" name="trade_id" value="{{ trade.id }}" />
+								<select
+									name="action"
+									class="px-2 py-1 rounded border text-sm bg-white text-black"
+									required
+								>
+									<option value="" disabled selected>Select result</option>
+									<option value="profit">Profit</option>
+									<option value="loss">Loss</option>
+								</select>
 								<button
 									type="submit"
-									name="action"
-									value="profit"
-									class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+									class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm"
 								>
-									Profit
-								</button>
-								<button
-									type="submit"
-									name="action"
-									value="loss"
-									class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm"
-								>
-									Loss
+									Submit
 								</button>
 							</form>
-							{% else %}
-							<span class="text-gray-400 text-sm">N/A</span>
+
+							{% endif %} {% if trade.is_closed %}
+							<form
+								method="POST"
+								onsubmit="return confirm('Are you sure you want to delete this trade?')"
+							>
+								{% csrf_token %}
+								<input
+									type="hidden"
+									name="delete_trade_id"
+									value="{{ trade.id }}"
+								/>
+								<button
+									type="submit"
+									class="bg-red-600 duration-300 hover:bg-red-700 text-white px-2 py-1 rounded text-sm"
+								>
+									🗑️ Delete
+								</button>
+							</form>
 							{% endif %}
 						</td>
 					</tr>
 					{% empty %}
 					<tr>
 						<td
-							colspan="8"
+							colspan="10"
 							class="px-4 py-6 text-center text-gray-500 dark:text-gray-400"
 						>
 							No trades found.

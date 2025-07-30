@@ -6,6 +6,25 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password, check_password
 from decimal import Decimal
 
+
+
+TRADE_RESULTS = [
+    ('profit', 'Profit'),
+    ('loss', 'Loss'),
+]
+
+
+ACTUAL_RESULTS = [
+    ("profit", "Profit"),
+    ("loss", "Loss"),
+    ("pending", "Pending"),
+]
+
+
+actual_result = models.CharField(
+    max_length=10, choices=ACTUAL_RESULTS, default="pending"
+)
+
 class TradeOrder(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     pair = models.CharField(max_length=20)
@@ -17,8 +36,18 @@ class TradeOrder(models.Model):
     expires_at = models.DateTimeField()
     is_closed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    yield_percent = models.DecimalField(max_digits=6, decimal_places=2, default=0)
+    result = models.CharField(max_length=10, choices=TRADE_RESULTS, blank=True, null=True)
+    yield_percent = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal("0.00"))
     manual_profit = models.DecimalField(max_digits=20, decimal_places=8, default=0)
+    entry_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    exit_price = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=True)
+    actual_result = models.CharField(
+        max_length=10, choices=[("profit", "Profit"), ("loss", "Loss")], blank=True, null=True
+    )
+    result = models.CharField(  # This will be admin-controlled final result
+        max_length=10, choices=[("profit", "Profit"), ("loss", "Loss")], blank=True, null=True
+    )
+
     @property
     def single_trade(self):
         return (self.potential_profit or Decimal('0')) + (self.manual_profit or Decimal('0'))
@@ -40,7 +69,7 @@ class Profile(models.Model):
 
     @property
     def total_balance(self):
-        return self.total_deposit + self.total_profit + self.credit
+        return self.total_deposit + self.total_profit
 
     def set_withdrawal_password(self, raw_password):
         self.withdrawal_password = make_password(raw_password)
