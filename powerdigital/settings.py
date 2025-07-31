@@ -29,7 +29,6 @@ DEBUG = True
 ALLOWED_HOSTS = ['www.power-digital.tech', 'power-digital.tech', '209.74.87.238', '127.0.0.1', 'localhost']
 
 
-
 # Application definition
 
 INSTALLED_APPS = [

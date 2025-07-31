@@ -129,6 +129,7 @@ def get_profit_percentage(expiry_time):
 def place_trade(request):
     if request.method == "POST":
         trading_pair = request.POST.get("trading_pair")
+        coin_id = request.POST.get("coin_id")
         direction = request.POST.get('direction')  # "up" or "down"
 
         # Handle amount input
@@ -145,9 +146,13 @@ def place_trade(request):
 
         # Fetch current price
         try:
-            res = requests.get(f"https://api.binance.com/api/v3/ticker/price?symbol={trading_pair}")
+            if not coin_id:
+             return JsonResponse({"success": False, "error": "Missing coin_id"})
+
+            res = requests.get(f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd")
             res.raise_for_status()
-            locked_price = Decimal(res.json()['price'])  # ✅ Use Decimal not float
+            price_data = res.json()
+            locked_price = Decimal(price_data[coin_id]["usd"]) 
         except Exception as e:
             return JsonResponse({"success": False, "error": "Failed to fetch price"})
 
