@@ -37,7 +37,7 @@ urlpatterns = [
     path('ad/manage_trades/', views.admin_manage_trades, name='admin_manage_trades'),
     path("trade/check/<int:trade_id>/", views.check_trade_result, name="check_trade"),
     path('delete-trade/<int:trade_id>/', views.delete_trade, name='delete_trade'),
-
+    path('api/fetch_price/', views.fetch_price, name='fetch_price'),
     
     path('ad/dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('ad/deposits/', views.admin_deposit_list, name='admin_deposits'),

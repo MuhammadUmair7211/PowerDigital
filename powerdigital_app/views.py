@@ -28,6 +28,32 @@ def support_page(request):
 
 
 
+
+
+
+import requests
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def fetch_price(request):
+    symbol = request.GET.get('symbol', 'BTCUSDT')
+    url = f'https://api.binance.com/api/v3/ticker/price?symbol={symbol}'
+    try:
+        response = requests.get(url)
+        data = response.json()
+        return JsonResponse({'price': data.get('price')})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+
+
+
+
+
+
+
 def admin_required(function):
     @wraps(function)
     def _wrapped_view(request, *args, **kwargs):
@@ -129,7 +155,6 @@ def get_profit_percentage(expiry_time):
 def place_trade(request):
     if request.method == "POST":
         trading_pair = request.POST.get("trading_pair")
-        coin_id = request.POST.get("coin_id")
         direction = request.POST.get('direction')  # "up" or "down"
 
         # Handle amount input
@@ -146,13 +171,9 @@ def place_trade(request):
 
         # Fetch current price
         try:
-            if not coin_id:
-             return JsonResponse({"success": False, "error": "Missing coin_id"})
-
-            res = requests.get(f"https://api.coingecko.com/api/v3/simple/price?ids={coin_id}&vs_currencies=usd")
+            res = requests.get(f"https://api.binance.com/api/v3/ticker/price?symbol={trading_pair}")
             res.raise_for_status()
-            price_data = res.json()
-            locked_price = Decimal(price_data[coin_id]["usd"]) 
+            locked_price = Decimal(res.json()['price'])  # ✅ Use Decimal not float
         except Exception as e:
             return JsonResponse({"success": False, "error": "Failed to fetch price"})
 

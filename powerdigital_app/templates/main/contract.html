@@ -49,12 +49,11 @@
 					name="trading_pair"
 					class="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600"
 				>
-					<option value="BTCUSDT" data-id="bitcoin">BTC/USDT</option>
-					<option value="ETHUSDT" data-id="ethereum">ETH/USDT</option>
-					<option value="BNBUSDT" data-id="binancecoin">BNB/USDT</option>
-					<option value="SOLUSDT" data-id="solana">SOL/USDT</option>
+					<option value="BTCUSDT">BTC/USDT</option>
+					<option value="ETHUSDT">ETH/USDT</option>
+					<option value="BNBUSDT">BNB/USDT</option>
+					<option value="SOLUSDT">SOL/USDT</option>
 				</select>
-				<input type="hidden" name="coin_id" id="coin_id_input" value="" />
 				<div class="mt-2 text-sm text-green-400" id="live_price">
 					Live Price: <span id="live_price_value">--</span> USDT
 				</div>
@@ -257,18 +256,13 @@
 				const livePriceValue = document.getElementById("live_price_value");
 
 				// Fetch price from Binance and update the UI
-				async function fetchLivePrice(coinId) {
+				async function fetchLivePrice(symbol) {
 					try {
-						const res = await fetch(
-							`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
-						);
+						const res = await fetch(`/api/fetch_price/?symbol=${symbol}`);
 						const data = await res.json();
 						console.log(data);
-
-						if (data[coinId] && data[coinId].usd) {
-							livePriceValue.textContent = parseFloat(data[coinId].usd).toFixed(
-								2
-							);
+						if (data.price) {
+							livePriceValue.textContent = parseFloat(data.price).toFixed(2);
 						} else {
 							livePriceValue.textContent = "--";
 						}
@@ -279,16 +273,13 @@
 				}
 
 				if (tradingPair.value) {
-					const selectedOption = tradingPair.options[tradingPair.selectedIndex];
-					const coinId = selectedOption.getAttribute("data-id");
-					fetchLivePrice(coinId);
+					fetchLivePrice(tradingPair.value);
 				}
 
 				// Update live price on select change
 				tradingPair.addEventListener("change", () => {
-					const selectedOption = tradingPair.options[tradingPair.selectedIndex];
-					const coinId = selectedOption.getAttribute("data-id");
-					fetchLivePrice(coinId);
+					const selectedPair = tradingPair.value;
+					fetchLivePrice(selectedPair);
 				});
 
 				// Handle yield percent change
@@ -346,31 +337,24 @@
 					// Lock entry price
 					async function fetchLockedPrice() {
 						try {
-							const selectedOption =
-								tradingPair.options[tradingPair.selectedIndex];
-							const coinId = selectedOption.getAttribute("data-id");
-
-							const res = await fetch(
-								`https://api.coingecko.com/api/v3/simple/price?ids=${coinId}&vs_currencies=usd`
-							);
+							const symbol = tradingPair.value; // example: 'BTCUSDT'
+							const res = await fetch(`/api/fetch_price/?symbol=${symbol}`);
 							const data = await res.json();
 
-							if (data[coinId] && data[coinId].usd) {
-								const lockedPrice = parseFloat(data[coinId].usd).toFixed(2);
+							if (data.price) {
+								const lockedPrice = parseFloat(data.price).toFixed(2);
 								lockedPriceSpan.textContent = lockedPrice;
 								window.lockedEntryPrice = lockedPrice;
-								console.log("Locked price:", lockedPrice);
 							} else {
-								lockedPriceSpan.textContent = "--";
+								lockedPriceSpan.textContent = "Error";
+								console.error("No price in response:", data);
 							}
 						} catch (err) {
-							lockedPriceSpan.textContent = "Error";
-							console.error("Failed to fetch locked price:", err);
+							lockedPriceSpan.textContent = "❌ Failed";
+							console.error("❌ Failed to fetch price:", err);
 						}
 					}
-
 					fetchLockedPrice();
-
 					const interval = setInterval(() => {
 						countdownText.textContent = timeLeft;
 						const progress = timeLeft / durationInSeconds;
@@ -428,13 +412,8 @@
 				// Trade form submit logic
 				const form = document.querySelector("#tradeForm");
 				if (form) {
-					const coinIdInput = document.querySelector("#coin_id_input");
 					form.addEventListener("submit", async function (e) {
 						e.preventDefault();
-						const selectedOption =
-							tradingPair.options[tradingPair.selectedIndex];
-						const coinId = selectedOption.getAttribute("data-id");
-						coinIdInput.value = coinId;
 
 						const formData = new FormData(this);
 						const response = await fetch("/contract/", {
