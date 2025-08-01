@@ -22,34 +22,10 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+
+
 def support_page(request):
     return render(request, 'index/support_page.html')
-
-
-
-
-
-
-
-import requests
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-@csrf_exempt
-def fetch_price(request):
-    symbol = request.GET.get('symbol', 'BTCUSDT')
-    url = f'https://api.binance.com/api/v3/ticker/price?symbol={symbol}'
-    try:
-        response = requests.get(url)
-        data = response.json()
-        return JsonResponse({'price': data.get('price')})
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-
-
-
 
 
 
@@ -150,57 +126,74 @@ def get_profit_percentage(expiry_time):
 
 
 
+
+
+
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+from django.utils import timezone
+from decimal import Decimal
+from .models import Profile, TradeOrder
+import requests
+from datetime import timedelta
+
+
 @login_required
 @transaction.atomic
 def place_trade(request):
     if request.method == "POST":
-        trading_pair = request.POST.get("trading_pair")
+        trading_pair = request.POST.get("trading_pair")  # e.g., "bitcoin"
         direction = request.POST.get('direction')  # "up" or "down"
 
-        # Handle amount input
+        # Validate and parse amount
         try:
             amount = Decimal(request.POST.get('custom_amount') or "0")
         except Exception:
             return JsonResponse({'success': False, 'error': 'Invalid amount.'})
 
-        # Handle expiry input
+        # Validate and parse expiry time
         try:
             expiry_time = int(request.POST.get("expiry_time") or 0)
         except Exception:
             return JsonResponse({'success': False, 'error': 'Invalid expiry time.'})
 
-        # Fetch current price
-        try:
-            res = requests.get(f"https://api.binance.com/api/v3/ticker/price?symbol={trading_pair}")
-            res.raise_for_status()
-            locked_price = Decimal(res.json()['price'])  # ✅ Use Decimal not float
-        except Exception as e:
-            return JsonResponse({"success": False, "error": "Failed to fetch price"})
-
-        # Validate trade inputs
+        # Basic validation
         if amount <= 0 or expiry_time <= 0 or direction not in ["up", "down"]:
             return JsonResponse({'success': False, 'error': 'Invalid trade data.'})
 
+        # ✅ Fetch price from CoinGecko
+        try:
+            url = f"https://api.coingecko.com/api/v3/simple/price?ids={trading_pair}&vs_currencies=usd"
+            res = requests.get(url, timeout=5)
+            res.raise_for_status()
+            data = res.json()
+
+            if trading_pair in data and "usd" in data[trading_pair]:
+                locked_price = Decimal(str(data[trading_pair]["usd"]))
+            else:
+                return JsonResponse({"success": False, "error": "Invalid CoinGecko response."})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": f"Failed to fetch price: {str(e)}"})
+
+        # ✅ Get user profile and validate balance
         profile = Profile.objects.select_for_update().get(user=request.user)
         total_balance = profile.total_balance
 
-        # Check if user has enough balance
         if total_balance < amount:
             return JsonResponse({'success': False, 'error': 'Insufficient balance'})
 
-        # Deduct funds in order: credit → deposit → profit
+        # ✅ Deduct funds
         remaining = amount
 
-        # First: Deduct from deposit
-        if remaining > 0:
-            if profile.total_deposit >= remaining:
-                profile.total_deposit -= remaining
-                remaining = 0
-            else:
-                remaining -= profile.total_deposit
-                profile.total_deposit = 0
+        if profile.total_deposit >= remaining:
+            profile.total_deposit -= remaining
+            remaining = 0
+        else:
+            remaining -= profile.total_deposit
+            profile.total_deposit = 0
 
-        # Then: Deduct remaining from profit
         if remaining > 0:
             if profile.total_profit >= remaining:
                 profile.total_profit -= remaining
@@ -210,16 +203,16 @@ def place_trade(request):
 
         profile.save()
 
-        # Calculate profit values
+        # ✅ Calculate yield/profit
         profit_percent = get_profit_percentage(expiry_time)
         potential_profit = round(amount * profit_percent, 2)
-        yield_percent = profit_percent * 100  # Convert 0.3 → 30.0
+        yield_percent = profit_percent * 100  # e.g., 0.3 → 30%
 
-        # ✅ Save trade order
+        # ✅ Create trade
         trade = TradeOrder.objects.create(
             user=request.user,
             pair=trading_pair,
-            direction=direction,  # ✅ Keep as "up"/"down"
+            direction=direction,
             amount=amount,
             expiry_time=expiry_time,
             balance=total_balance,
@@ -234,11 +227,11 @@ def place_trade(request):
             'success': True,
             'trade_id': trade.id,
             'expires_at': trade.expires_at.strftime('%Y-%m-%d %H:%M:%S'),
-            'trade_end_timestamp': int(trade.expires_at.timestamp()),  # 🆕 optional
+            'trade_end_timestamp': int(trade.expires_at.timestamp()),
             'profit_added': str(potential_profit)
         })
 
-    # Only GET request reaches here, no access to 'remaining'
+    # For GET requests
     return render(request, "main/contract.html", {
         'expiry_options': [60, 120, 180, 300, 360],
         'quick_amounts': [10, 25, 50, 100, 250, 500, 1000],
@@ -268,10 +261,7 @@ def submit_order(request):
 
 
 @login_required
-def user_trades(request):  
-    if request.user.is_staff or request.user.is_superuser:
-        return redirect('admin_dashboard')
-    
+def user_trades(request): 
     trades = TradeOrder.objects.filter(user=request.user).order_by('-created_at')
     profile, _ = Profile.objects.get_or_create(user=request.user)
     total_profit = round(profile.total_profit, 2)
@@ -295,9 +285,6 @@ def user_trades(request):
 
 
 
-
-
-
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect
 from .models import TradeOrder
@@ -310,9 +297,6 @@ def delete_trade(request, trade_id):
         trade.delete()
     
     return redirect('user_trades')  # or another relevant page
-
-
-
 
 
 
@@ -333,10 +317,13 @@ def profile(request):
     })
 
 
+
 from decimal import Decimal
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.db.models import Q
 from .models import TradeOrder, Profile
 
 @login_required
@@ -352,7 +339,7 @@ def admin_manage_trades(request):
             trade_id = request.POST.get("delete_trade_id")
             trade = get_object_or_404(TradeOrder, id=trade_id)
             trade.delete()
-            messages.success(request, f"Trade #{trade_id} deleted.")
+            messages.warning(request, f"🗑️ Trade #{trade_id} for {trade.user.username} was deleted.")
             return redirect('admin_manage_trades')
 
         # Handle profit/loss marking
@@ -366,35 +353,55 @@ def admin_manage_trades(request):
         trade = get_object_or_404(TradeOrder, id=trade_id)
         profile = get_object_or_404(Profile, user=trade.user)
 
-        # Revert any previous result effect on user's balance
+        # Revert previous effect if already marked
         if trade.result == "profit":
-            profile.total_profit -= trade.amount + trade.manual_profit
+            profile.total_profit -= trade.manual_profit
+            profile.total_deposit -= trade.amount
         elif trade.result == "loss":
-            pass  # Nothing to subtract for a loss
+            pass  # No need to revert anything
 
         # Apply new result
         if action == "profit":
             profit = (trade.amount * trade.yield_percent) / 100
             trade.manual_profit = profit
             profile.total_profit += profit
+            profile.total_deposit += trade.amount
             trade.result = "profit"
+            messages.success(
+                request,
+                f"✅ Trade #{trade_id} for {trade.user.username} marked as PROFIT. "
+                f"Profit: ${profit:.2f} at {trade.yield_percent}% yield."
+            )
         elif action == "loss":
             trade.manual_profit = Decimal('0.00')
             trade.yield_percent = Decimal('0.00')
+            profile.total_deposit -= trade.amount
+            profile.total_profit -= trade.manual_profit
             trade.result = "loss"
+            messages.error(
+                request,
+                f"❌ Trade #{trade_id} for {trade.user.username} marked as LOSS. No profit applied."
+            )
 
         trade.is_closed = True
         trade.save()
         profile.save()
-
-        messages.success(request, f"Trade #{trade_id} marked as {action.upper()}.")
         return redirect('admin_manage_trades')
 
-    trades = TradeOrder.objects.all().order_by('-created_at')
-    
+    # GET request - show list with optional search and pagination
+    trades = TradeOrder.objects.all().select_related("user").order_by('-created_at')
     if search_query:
         trades = trades.filter(Q(user__username__icontains=search_query))
-    return render(request, "admins/manage_trades.html", {"trades": trades, "search_query":search_query})
+
+    # PAGINATION
+    paginator = Paginator(trades, 10)  # 10 trades per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "admins/manage_trades.html", {
+        "trades": page_obj,
+        "search_query": search_query,
+    })
 
 
 
@@ -632,109 +639,47 @@ def real_market(request):
 
 
 
-
-
-from decimal import Decimal
-from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
-from .models import TradeOrder, Profile
-
-@transaction.atomic
-def mark_trade_result(request, trade_id, outcome):
-    trade = get_object_or_404(TradeOrder, id=trade_id)
-    profile = trade.user.profile
-
-    # ✅ Exit early if already handled
-    if trade.result_handled:
-        messages.warning(request, "This trade was already handled.")
-        return redirect('admin_manage_trades')
-
-    # ✅ Revert previous automatic result
-    if trade.actual_result == "profit":
-        reversal = trade.amount + trade.manual_profit
-        profile.account_balance -= reversal
-        profile.total_profit -= trade.manual_profit
-    elif trade.actual_result == "loss":
-        profile.account_balance += trade.amount  # refund amount lost
-
-    # ✅ Apply admin override
-    if outcome == "profit":
-        profit = (trade.amount * trade.yield_percent) / 100
-        profile.account_balance += trade.amount + profit
-        profile.total_profit += profit
-        trade.result = "profit"
-        trade.manual_profit = profit
-    elif outcome == "loss":
-        profile.account_balance -= trade.amount
-        trade.result = "loss"
-        trade.manual_profit = Decimal('0.00')
-        trade.yield_percent = Decimal('0.00')
-
-    trade.result_handled = True
-    profile.save()
-    trade.save()
-
-    messages.success(request, f"Trade marked as {outcome}.")
-    return redirect("admin_manage_trades")
-
-
-
-
-
-
-
-
-from decimal import Decimal
-import requests
-from django.utils import timezone
-
-def get_current_price(pair):
-    try:
-        symbol = pair.replace("/", "")  # e.g. BTC/USDT → BTCUSDT
-        res = requests.get(f"https://api.binance.com/api/v3/ticker/price?symbol={symbol}")
-        res.raise_for_status()
-        return Decimal(res.json()['price'])
-    except Exception as e:
-        print(f"Error fetching price for {pair}: {e}")
-        return None
-
-
-
-
-
-
 from decimal import Decimal
 from .models import TradeOrder, Profile
+from .utils import get_current_price  # Your backend price fetcher
 
 def handle_trade_expiry(trade):
     if trade.is_closed:
-        return  # Prevent reprocessing
+        return  # Prevent duplicate processing
 
     profile = trade.user.profile
 
-    # Prices
+    # Secure price fetch (do NOT rely on frontend)
     entry_price = trade.entry_price
     expiry_price = get_current_price(trade.pair)
     direction = trade.direction
 
-    # Save exit price
+    # Set exit price in trade
     trade.exit_price = expiry_price
 
-    # Determine result
+    # Profit logic
     if (direction == "up" and expiry_price > entry_price) or (direction == "down" and expiry_price < entry_price):
         result = "profit"
-        profit = (trade.amount * trade.yield_percent) / 100
-        total_profit = trade.amount + profit
+        profit = (trade.amount * trade.yield_percent) / Decimal(100)
 
-        # ✅ Update fields on profit
-        profile.total_profit += total_profit
+        # Ensure profit is not negative
+        if profit < 0:
+            profit = Decimal('0.00')
+
+        profile.total_deposit += trade.amount
+        profile.total_profit += profit
         trade.manual_profit = profit
     else:
         result = "loss"
+        trade.manual_profit = Decimal('0.00')
+        # ❌ No refund or credit added
+
+    # Finalize result
     trade.result = result
     profile.save()
     trade.save()
+
+
 
 
 
@@ -800,48 +745,6 @@ def trade_review_admin(request):
         'page_obj': page_obj
     }
     return render(request, 'admins/trade_review.html', context)
-
-
-
-
-
-@login_required
-@transaction.atomic
-def mark_trade_result(request, trade_id, outcome):
-    trade = get_object_or_404(TradeOrder, id=trade_id)
-    profile = trade.user.profile
-
-    # ✅ Step 1: Revert previous result if already handled
-    if trade.result_handled:
-        if trade.result == "profit":
-            # Remove previously added profit and amount
-            profile.total_profit -= trade.manual_profit
-
-        elif trade.result == "loss":
-            pass
-
-    # ✅ Step 2: Apply new result
-    if outcome == "profit":
-        profit = (trade.amount * trade.yield_percent) / 100
-        profile.total_balance += trade.amount + profit
-        profile.total_profit += profit
-        trade.result = "profit"
-        trade.manual_profit = profit
-
-    elif outcome == "loss":
-        # Do NOT deduct amount again — it was already deducted at trade placement
-        trade.result = "loss"
-        trade.manual_profit = Decimal('0.00')
-        trade.yield_percent = Decimal('0.00')
-
-    trade.result_handled = True
-    profile.save()
-    trade.save()
-
-    messages.success(request, f"Trade successfully marked as {outcome}.")
-    return redirect("admin_manage_trades")
-
-
 
 
 

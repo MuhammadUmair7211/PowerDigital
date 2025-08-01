@@ -1,0 +1,23 @@
+[0;1;32m●[0m gunicorn.service - gunicorn daemon
+     Loaded: loaded (/etc/systemd/system/gunicorn.service; enabled; vendor preset: enabled)
+     Active: [0;1;32mactive (running)[0m since Thu 2025-07-31 15:17:40 UTC; 10min ago
+   Main PID: 2613 (gunicorn)
+      Tasks: 4 (limit: 2220)
+     Memory: 94.3M
+        CPU: 672ms
+     CGroup: /system.slice/gunicorn.service
+             ├─2613 /srv/PowerDigital/venv/bin/python3 /srv/PowerDigital/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/srv/PowerDigital/gunicorn.sock powerdigital.wsgi:application
+             ├─2614 /srv/PowerDigital/venv/bin/python3 /srv/PowerDigital/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/srv/PowerDigital/gunicorn.sock powerdigital.wsgi:application
+             ├─2615 /srv/PowerDigital/venv/bin/python3 /srv/PowerDigital/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/srv/PowerDigital/gunicorn.sock powerdigital.wsgi:application
+             └─2616 /srv/PowerDigital/venv/bin/python3 /srv/PowerDigital/venv/bin/gunicorn --access-logfile - --workers 3 --bind unix:/srv/PowerDigital/gunicorn.sock powerdigital.wsgi:application
+
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:   File "<frozen importlib._bootstrap>", line 1006, in _find_and_load_unlocked
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:   File "<frozen importlib._bootstrap>", line 688, in _load_unlocked
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:   File "/srv/PowerDigital/powerdigital_app/urls.py", line 2, in <module>
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:     from . import views
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:   File "/srv/PowerDigital/powerdigital_app/views.py", line 34, in <module>
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:     import requests
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]: ModuleNotFoundError: No module named 'requests'
+Jul 31 15:27:07 server1.power-digital.tech gunicorn[2615]:  - - [31/Jul/2025:20:27:07 +0500] "GET / HTTP/1.0" 500 0 "-" "-"

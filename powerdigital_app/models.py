@@ -64,7 +64,14 @@ class Profile(models.Model):
     
     def save(self, *args, **kwargs):
         if not self.invite_code:
-            self.invite_code = str(uuid.uuid4()).split('-')[0]
+           self.invite_code = str(uuid.uuid4()).split('-')[0]
+        if self.total_deposit < 0:
+           self.total_deposit = Decimal('0.00')
+        if self.total_profit < 0:
+           self.total_profit = Decimal('0.00')
+        if self.credit < 0:
+           self.credit = Decimal('0.00')
+
         super().save(*args, **kwargs)
 
     @property
