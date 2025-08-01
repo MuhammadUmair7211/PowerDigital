@@ -136,25 +136,68 @@
 	<body>
 		<br />
 		<div class="container bg-gray-800 py-5">
-			<h2>
-				<span class="text-4xl">👥</span>
-				All Registered Users
-			</h2>
 			{% if messages %}
 			<div
 				id="messages"
-				class="fixed top-5 left-1/2 transform -translate-x-1/2 z-50 w-fit"
+				class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 w-fit space-y-2"
 			>
 				{% for message in messages %}
 				<div
-					class="px-4 py-2 mb-2 rounded shadow {% if message.tags == 'success' %}bg-green-500 text-white {% elif message.tags == 'error' %}bg-red-500 text-white {% endif %}"
+					class="flex items-center gap-3 px-5 py-3 rounded-md shadow-lg transition-opacity duration-300 animate-fade-in {% if message.tags == 'success' %} bg-green-600 text-white {% elif message.tags == 'error' %} bg-red-600 text-white {% elif message.tags == 'info' %} bg-blue-600 text-white {% else %} bg-gray-700 text-white {% endif %}"
 				>
-					{{ message }}
+					{% if message.tags == 'success' %}
+					<svg
+						class="w-5 h-5 text-white"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M5 13l4 4L19 7"
+						/>
+					</svg>
+					{% elif message.tags == 'error' %}
+					<svg
+						class="w-5 h-5 text-white"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M6 18L18 6M6 6l12 12"
+						/>
+					</svg>
+					{% elif message.tags == 'info' %}
+					<svg
+						class="w-5 h-5 text-white"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						viewBox="0 0 24 24"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M13 16h-1v-4h-1m1-4h.01M12 6a9 9 0 110 18 9 9 0 010-18z"
+						/>
+					</svg>
+					{% endif %}
+					<span class="text-sm font-medium">{{ message }}</span>
 				</div>
 				{% endfor %}
 			</div>
 			{% endif %}
 
+			<h2>
+				<span class="text-4xl">👥</span>
+				All Registered Users
+			</h2>
 			<div class="overflow-x-auto">
 				<table class="w-full border-collapse text-sm text-left">
 					<thead>

@@ -49,10 +49,10 @@
 					name="trading_pair"
 					class="w-full p-3 rounded-lg bg-gray-800 text-white border border-gray-600"
 				>
-					<option value="BTCUSDT">BTC/USDT</option>
-					<option value="ETHUSDT">ETH/USDT</option>
-					<option value="BNBUSDT">BNB/USDT</option>
-					<option value="SOLUSDT">SOL/USDT</option>
+					<option value="bitcoin">BTC/USDT</option>
+					<option value="ethereum">ETH/USDT</option>
+					<option value="binancecoin">BNB/USDT</option>
+					<option value="solana">SOL/USDT</option>
 				</select>
 				<div class="mt-2 text-sm text-green-400" id="live_price">
 					Live Price: <span id="live_price_value">--</span> USDT
@@ -251,18 +251,47 @@
 		<br /><br /><br />
 
 		<script>
+			// Function to extract CSRF token from cookies
+			function getCookie(name) {
+				let cookieValue = null;
+				if (document.cookie && document.cookie !== "") {
+					const cookies = document.cookie.split(";");
+					for (let i = 0; i < cookies.length; i++) {
+						const cookie = cookies[i].trim();
+
+						// Check if this cookie string begins with the name we want
+						if (cookie.substring(0, name.length + 1) === name + "=") {
+							cookieValue = decodeURIComponent(
+								cookie.substring(name.length + 1)
+							);
+							break;
+						}
+					}
+				}
+				return cookieValue;
+			}
+
+			// Assign the CSRF token to a variable
+			const csrftoken = getCookie("csrftoken");
+
 			document.addEventListener("DOMContentLoaded", () => {
 				const tradingPair = document.querySelector("#trading_pair");
 				const livePriceValue = document.getElementById("live_price_value");
+				const form = document.querySelector("#tradeForm");
 
-				// Fetch price from Binance and update the UI
+				let lockedEntryPrice = null;
+				let currentMarketPrice = null;
+
+				// 🔁 Fetch live price from CoinGecko
 				async function fetchLivePrice(symbol) {
 					try {
-						const res = await fetch(`/api/fetch_price/?symbol=${symbol}`);
+						const res = await fetch(
+							`https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd`
+						);
 						const data = await res.json();
-						console.log(data);
-						if (data.price) {
-							livePriceValue.textContent = parseFloat(data.price).toFixed(2);
+						if (data[symbol] && data[symbol].usd) {
+							const price = parseFloat(data[symbol].usd).toFixed(2);
+							livePriceValue.textContent = price;
 						} else {
 							livePriceValue.textContent = "--";
 						}
@@ -272,89 +301,96 @@
 					}
 				}
 
-				if (tradingPair.value) {
-					fetchLivePrice(tradingPair.value);
+				// 🔒 Lock entry price when trade starts
+				async function fetchLockedEntryPrice(symbol) {
+					try {
+						const res = await fetch(
+							`https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd`
+						);
+						const data = await res.json();
+						if (data[symbol] && data[symbol].usd) {
+							lockedEntryPrice = parseFloat(data[symbol].usd).toFixed(2);
+							document.getElementById("locked_entry_price").textContent =
+								lockedEntryPrice;
+						} else {
+							document.getElementById("locked_entry_price").textContent =
+								"Error";
+						}
+					} catch (err) {
+						console.error("❌ Failed to lock entry price:", err);
+						document.getElementById("locked_entry_price").textContent =
+							"❌ Failed";
+					}
 				}
 
-				// Update live price on select change
-				tradingPair.addEventListener("change", () => {
-					const selectedPair = tradingPair.value;
-					fetchLivePrice(selectedPair);
-				});
+				// 📈 Fetch exit price at trade expiry
+				async function fetchExitPrice(symbol) {
+					try {
+						const res = await fetch(
+							`https://api.coingecko.com/api/v3/simple/price?ids=${symbol}&vs_currencies=usd`
+						);
+						const data = await res.json();
+						if (data[symbol] && data[symbol].usd) {
+							currentMarketPrice = parseFloat(data[symbol].usd).toFixed(2);
+						}
+					} catch (err) {
+						console.error("❌ Failed to fetch exit price:", err);
+					}
+				}
 
-				// Handle yield percent change
+				// 🔄 Fetch on load & dropdown change
+				if (tradingPair.value) fetchLivePrice(tradingPair.value);
+				tradingPair.addEventListener("change", () =>
+					fetchLivePrice(tradingPair.value)
+				);
+
+				// 📊 Yield % logic
 				document
 					.querySelectorAll('input[name="expiry_time"]')
 					.forEach((radio) => {
 						radio.addEventListener("change", () => {
-							const value = parseInt(radio.value);
+							const time = parseInt(radio.value);
 							let yieldPercent = 30.0;
-
-							if (value === 180) yieldPercent = 40.0;
-							else if (value === 300) yieldPercent = 50.0;
-							else if (value === 360) yieldPercent = 60.0;
-
+							if (time === 180) yieldPercent = 40.0;
+							else if (time === 300) yieldPercent = 50.0;
+							else if (time === 360) yieldPercent = 60.0;
 							document.getElementById("yield_percent").value =
 								yieldPercent.toFixed(2);
 						});
 					});
 
-				// Amount button click
+				// 💲 Amount shortcut buttons
 				document.querySelectorAll(".amount-btn").forEach((btn) => {
 					btn.addEventListener("click", () => {
 						document.getElementById("custom_amount").value = btn.dataset.amount;
 					});
 				});
 
-				// Popup logic
-				const showPopup = (message, isSuccess = true) => {
+				// ✅ Show popup
+				function showPopup(message, isSuccess = true) {
 					const modal = document.getElementById("popup-modal");
 					const msgBox = document.getElementById("popup-message");
-
 					msgBox.innerHTML = message;
 					msgBox.className = isSuccess
 						? "text-green-600 font-semibold text-base"
 						: "text-red-600 font-semibold text-base";
-
 					modal.classList.remove("hidden");
-				};
+				}
 
 				document.getElementById("close-popup").addEventListener("click", () => {
 					document.getElementById("popup-modal").classList.add("hidden");
 				});
 
-				// Countdown logic
+				// ⏱️ Trade countdown
 				function startTradeCountdown(durationInSeconds, tradeId) {
 					const modal = document.getElementById("tradeCountdownModal");
 					const countdownCircle = document.getElementById("countdownCircle");
 					const countdownText = document.getElementById("countdownText");
-					const lockedPriceSpan = document.getElementById("locked_entry_price");
 
 					modal.classList.remove("hidden");
 					let timeLeft = durationInSeconds;
 					const fullDash = 283;
 
-					// Lock entry price
-					async function fetchLockedPrice() {
-						try {
-							const symbol = tradingPair.value; // example: 'BTCUSDT'
-							const res = await fetch(`/api/fetch_price/?symbol=${symbol}`);
-							const data = await res.json();
-
-							if (data.price) {
-								const lockedPrice = parseFloat(data.price).toFixed(2);
-								lockedPriceSpan.textContent = lockedPrice;
-								window.lockedEntryPrice = lockedPrice;
-							} else {
-								lockedPriceSpan.textContent = "Error";
-								console.error("No price in response:", data);
-							}
-						} catch (err) {
-							lockedPriceSpan.textContent = "❌ Failed";
-							console.error("❌ Failed to fetch price:", err);
-						}
-					}
-					fetchLockedPrice();
 					const interval = setInterval(() => {
 						countdownText.textContent = timeLeft;
 						const progress = timeLeft / durationInSeconds;
@@ -366,31 +402,42 @@
 						if (timeLeft <= 0) {
 							clearInterval(interval);
 							countdownText.textContent = "In Settlement!";
-							setTimeout(() => {
+							setTimeout(async () => {
 								modal.classList.add("hidden");
 
-								// Fetch trade result
-								if (tradeId) {
-									fetch(`/trade/check/${tradeId}/`)
+								// Fetch exit price at expiry
+								await fetchExitPrice(tradingPair.value);
+
+								// Send to backend
+								if (tradeId && lockedEntryPrice && currentMarketPrice) {
+									fetch(`/trade/check/${tradeId}/`, {
+										method: "POST",
+										headers: {
+											"Content-Type": "application/json",
+											"X-CSRFToken": csrftoken,
+										},
+										body: JSON.stringify({
+											entry_price: lockedEntryPrice,
+											exit_price: currentMarketPrice,
+										}),
+									})
 										.then((res) => res.json())
 										.then((data) => {
 											if (data.success) {
 												let message = `
-<span class="text-yellow-500">📉 Entry: <span class="text-yellow-500">${data.entry_price}</span></span><br>
-<span class="text-cyan-500">📊 Exit: <span class="text-cyan-500">${data.exit_price}</span></span><br><br>
-`;
-
+											<span class="text-yellow-500">📉 Entry: <span>${data.entry_price}</span></span><br>
+											<span class="text-cyan-500">📊 Exit: <span>${data.exit_price}</span></span><br><br>
+										`;
 												if (data.result === "profit") {
-													message += `<span class="text-green-500 font-semibold"> + $${parseFloat(
+													message += `<span class="text-green-500 font-semibold">+ $${parseFloat(
 														data.profit
 													).toFixed(2)} profit</span>`;
-													showPopup(message, true); // ✅ Show profit popup
-												} else if (data.result === "loss") {
-													message += `<span class="text-red-500 font-semibold">  - $${parseFloat(
+												} else {
+													message += `<span class="text-red-500 font-semibold">- $${parseFloat(
 														data.amount
 													).toFixed(2)} loss</span>`;
-													showPopup(message, false); // ✅ Show loss popup
 												}
+												showPopup(message, data.result === "profit");
 											} else {
 												showPopup("❌ Failed to check trade result.", false);
 											}
@@ -400,7 +447,7 @@
 											showPopup("🚨 Error checking trade result.", false);
 										});
 								} else {
-									showPopup("⚠️ Trade ID missing. Cannot check result.", false);
+									showPopup("⚠️ Missing data for result check.", false);
 								}
 							}, 2000);
 						}
@@ -409,11 +456,12 @@
 					}, 1000);
 				}
 
-				// Trade form submit logic
-				const form = document.querySelector("#tradeForm");
+				// 🚀 Form submit handler
 				if (form) {
 					form.addEventListener("submit", async function (e) {
 						e.preventDefault();
+
+						await fetchLockedEntryPrice(tradingPair.value);
 
 						const formData = new FormData(this);
 						const response = await fetch("/contract/", {
@@ -425,7 +473,7 @@
 
 						if (data.success) {
 							const expiry = parseInt(formData.get("expiry_time"));
-							startTradeCountdown(expiry, data.trade_id); // Pass trade_id from response
+							startTradeCountdown(expiry, data.trade_id);
 						} else {
 							showPopup(`❌ ${data.error || "Something went wrong"}`, false);
 						}
